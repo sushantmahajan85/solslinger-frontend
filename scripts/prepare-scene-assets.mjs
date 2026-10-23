@@ -1,18 +1,18 @@
 // Converts the supplied production artwork into web-optimised files under public/.
-// Usage: node scripts/prepare-scene-assets.mjs "<asset folder>" "<slot cabinet folder>"
-// Artwork is resized and re-encoded only; colours are never altered.
+// Usage: npm run assets
+// Reads the originals committed in ./assets-source (optionally pass a different asset folder and slot-cabinet
+// folder as arguments). Artwork is resized and re-encoded only; colours are never altered.
 import fs from 'node:fs/promises';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import sharp from 'sharp';
 
-const [assetDir, slotDir] = process.argv.slice(2);
-if (!assetDir || !slotDir) {
-  console.error('Usage: node scripts/prepare-scene-assets.mjs "<asset folder>" "<slot cabinet folder>"');
-  process.exit(1);
-}
+const projectRoot = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..');
+const defaultSource = path.join(projectRoot, 'assets-source');
+const assetDir = path.resolve(process.argv[2] ?? defaultSource);
+const slotDir = path.resolve(process.argv[3] ?? path.join(assetDir, 'slot cabinets'));
 
-const publicDir = path.resolve(path.dirname(fileURLToPath(import.meta.url)), '..', 'public');
+const publicDir = path.join(projectRoot, 'public');
 await fs.mkdir(path.join(publicDir, 'scene'), { recursive: true });
 await fs.mkdir(path.join(publicDir, 'brand'), { recursive: true });
 
@@ -21,6 +21,7 @@ const src = (...p) => path.join(assetDir, ...p);
 
 await sharp(src('Official Logo', 'Official logo.jpg')).resize(640).webp({ quality: 88 }).toFile(out('brand', 'logo.webp'));
 await sharp(src('Official Logo', 'Official logo.jpg')).resize(180).png().toFile(out('brand', 'icon.png'));
+await fs.copyFile(out('brand', 'icon.png'), path.join(projectRoot, 'src', 'app', 'icon.png'));
 await sharp(src('The bloody raven and hostess', 'The Bloody Raven.png')).webp({ quality: 84 }).toFile(out('scene', 'saloon.webp'));
 await sharp(src('The bloody raven and hostess', 'Hostess Gwen.png'))
   .resize(1200)

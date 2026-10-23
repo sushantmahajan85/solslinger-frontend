@@ -40,7 +40,7 @@ Start the backend first (`npm run dev:memory` in `solslinger-backend` needs no M
 | --- | --- |
 | `npm run dev` / `build` / `start` | Next.js dev server, production build, production server |
 | `npm run lint` / `typecheck` | ESLint and TypeScript checks |
-| `npm run assets -- "<asset folder>" "<slot cabinet folder>"` | Regenerates `public/brand` and `public/scene` from the original production artwork |
+| `npm run assets` | Regenerates `public/brand` and `public/scene` from the original artwork in `assets-source/` |
 
 ## Structure
 
@@ -59,8 +59,12 @@ src/
     layout/            shared journey frame for faction/character screens
   lib/                 API client, session/passport state, types, hooks
 public/
-  brand/, scene/       web-optimised copies of the supplied artwork
+  brand/, scene/       web-optimised copies of the supplied artwork (served by the app)
+assets-source/         the original, unmodified production artwork (logo, saloon, hostess, train, slot cabinets)
 ```
+
+The app only needs `public/` to run and deploy. `assets-source/` keeps the full-size originals in the repo so the
+web versions can always be regenerated with `npm run assets`; it is not served or bundled.
 
 ## Design system
 
