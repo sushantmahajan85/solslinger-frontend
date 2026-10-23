@@ -1,0 +1,193 @@
+.button {
+  position: relative;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-2);
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  font-family: var(--font-ui);
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  white-space: nowrap;
+  user-select: none;
+  transition:
+    background-color var(--dur-base) var(--ease-out),
+    border-color var(--dur-base) var(--ease-out),
+    color var(--dur-base) var(--ease-out),
+    box-shadow var(--dur-base) var(--ease-out),
+    transform var(--dur-fast) var(--ease-out);
+}
+
+.button:active:not(:disabled) {
+  transform: translateY(1px);
+}
+
+.button:disabled {
+  cursor: not-allowed;
+}
+
+.button[data-loading] {
+  cursor: progress;
+}
+
+.label {
+  display: inline-block;
+}
+
+.md {
+  height: 44px;
+  padding: 0 var(--space-6);
+  font-size: 14px;
+}
+
+.lg {
+  height: 52px;
+  padding: 0 var(--space-8);
+  font-size: 15px;
+}
+
+.full {
+  width: 100%;
+}
+
+/* ---- Primary: antique gold plate ---- */
+.primary {
+  color: var(--text-on-accent);
+  background: linear-gradient(180deg, var(--gold-bright) 0%, var(--gold) 55%, #a8854a 100%);
+  border-color: #e9d29a;
+  box-shadow:
+    0 1px 0 rgba(255, 244, 214, 0.55) inset,
+    0 -1px 0 rgba(80, 56, 20, 0.6) inset,
+    0 8px 24px rgba(197, 161, 90, 0.18);
+}
+
+.primary:hover:not(:disabled) {
+  background: linear-gradient(180deg, #f0d695 0%, #d2ae66 55%, #b18e50 100%);
+  box-shadow:
+    0 1px 0 rgba(255, 244, 214, 0.65) inset,
+    0 -1px 0 rgba(80, 56, 20, 0.6) inset,
+    0 10px 32px rgba(229, 199, 127, 0.3);
+}
+
+.primary:active:not(:disabled) {
+  background: linear-gradient(180deg, #b8955a 0%, #a8854a 100%);
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.5) inset;
+}
+
+.primary:disabled:not([data-loading]) {
+  color: var(--text-3);
+  background: var(--surface-2);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+.primary[data-loading] {
+  color: var(--text-on-accent);
+  opacity: 0.85;
+}
+
+/* ---- Secondary: blackened iron with brass edge ---- */
+.secondary {
+  color: var(--text-1);
+  background: linear-gradient(180deg, #232327 0%, #19191c 100%);
+  border-color: var(--border);
+  box-shadow: 0 1px 0 rgba(255, 255, 255, 0.04) inset;
+}
+
+.secondary:hover:not(:disabled) {
+  border-color: var(--brass);
+  color: var(--gold-bright);
+  background: linear-gradient(180deg, #29292e 0%, #1d1d21 100%);
+}
+
+.secondary:active:not(:disabled) {
+  background: var(--bg-1);
+}
+
+.secondary:disabled {
+  color: var(--text-3);
+  border-color: var(--border-subtle);
+}
+
+/* ---- Ghost: text-weight action ---- */
+.ghost {
+  color: var(--text-2);
+  background: transparent;
+  border-color: transparent;
+}
+
+.ghost:hover:not(:disabled) {
+  color: var(--text-1);
+  background: rgba(255, 255, 255, 0.04);
+}
+
+.ghost:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.07);
+}
+
+.ghost:disabled {
+  color: var(--text-3);
+  opacity: 0.6;
+}
+
+/* ---- Faction: neon-edged commitment action ---- */
+.faction {
+  color: var(--text-1);
+  background: color-mix(in srgb, var(--faction-deep) 85%, black);
+  border-color: color-mix(in srgb, var(--faction-glow) 70%, transparent);
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--faction-glow) 20%, transparent) inset,
+    0 0 18px color-mix(in srgb, var(--faction-glow) 22%, transparent);
+}
+
+.faction:hover:not(:disabled) {
+  border-color: var(--faction-glow);
+  background: color-mix(in srgb, var(--faction-deep) 70%, var(--faction-primary));
+  box-shadow:
+    0 0 0 1px color-mix(in srgb, var(--faction-glow) 35%, transparent) inset,
+    0 0 28px color-mix(in srgb, var(--faction-glow) 38%, transparent);
+}
+
+.faction:active:not(:disabled) {
+  background: var(--faction-deep);
+}
+
+.faction:disabled:not([data-loading]) {
+  color: var(--text-3);
+  background: var(--surface-1);
+  border-color: var(--border);
+  box-shadow: none;
+}
+
+/* ---- Icon button ---- */
+.iconButton {
+  display: inline-grid;
+  place-items: center;
+  width: 36px;
+  height: 36px;
+  padding: 0;
+  border: 1px solid transparent;
+  border-radius: var(--radius-sm);
+  background: transparent;
+  color: var(--text-2);
+  transition:
+    color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out),
+    border-color var(--dur-fast) var(--ease-out);
+}
+
+.iconButton:hover:not(:disabled) {
+  color: var(--text-1);
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--border-subtle);
+}
+
+.iconButton:active:not(:disabled) {
+  background: rgba(255, 255, 255, 0.09);
+}
+
+.iconButton:disabled {
+  color: var(--text-3);
+  cursor: not-allowed;
+}

@@ -1,0 +1,196 @@
+.pending {
+  display: grid;
+  place-items: center;
+  min-height: 100dvh;
+  color: var(--gold);
+}
+
+.screen {
+  position: relative;
+  isolation: isolate;
+  height: 100dvh;
+  min-height: 560px;
+  overflow: hidden;
+  background: #070606;
+  perspective: 1400px;
+  transition: opacity var(--dur-slow) var(--ease-in-out);
+}
+
+.leaving {
+  opacity: 0;
+}
+
+/* The whole shot tilts toward the cursor; the overscan keeps edges hidden while it turns. */
+.canvasHost {
+  position: absolute;
+  inset: -3%;
+  z-index: -2;
+  transform: rotateY(calc(var(--px, 0) * 3deg)) rotateX(calc(var(--py, 0) * -2.2deg));
+  will-change: transform;
+}
+
+/* `translate` composes with the reveal animation, which owns `transform`. */
+.titleBlock {
+  translate: calc(var(--px, 0) * -8px) calc(var(--py, 0) * -6px);
+}
+
+.canvasHost canvas {
+  display: block;
+}
+
+.curtain {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background: #070606;
+}
+
+.fallback {
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  background:
+    radial-gradient(ellipse 50% 30% at 78% 59%, rgba(240, 163, 68, 0.28), transparent 70%),
+    linear-gradient(180deg, #060607 0%, #110d0b 38%, #2a1a10 58%, #140f0c 64%, #070606 100%);
+}
+
+.fallbackTrain {
+  object-fit: cover;
+}
+
+/* Top and bottom shading keeps text readable without boxing it into panels. */
+.screen::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: -1;
+  pointer-events: none;
+  background:
+    linear-gradient(180deg, rgba(5, 5, 6, 0.85) 0%, rgba(5, 5, 6, 0) 26%),
+    linear-gradient(0deg, rgba(5, 5, 6, 0.9) 0%, rgba(5, 5, 6, 0) 22%);
+}
+
+.topBar {
+  position: absolute;
+  top: 0;
+  left: 0;
+  right: 0;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: var(--space-6) var(--gutter);
+}
+
+.titleBlock {
+  position: absolute;
+  top: clamp(88px, 11vh, 132px);
+  left: var(--gutter);
+  display: grid;
+  gap: var(--space-3);
+  max-width: 560px;
+  animation: title-reveal 1.4s var(--ease-out) 0.6s both;
+}
+
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--outlaws-secondary);
+}
+
+.title {
+  font-size: var(--text-h1);
+  text-shadow: 0 2px 24px rgba(0, 0, 0, 0.8);
+}
+
+.lede {
+  color: var(--text-2);
+  font-size: 16px;
+  max-width: 44ch;
+  text-shadow: 0 1px 12px rgba(0, 0, 0, 0.9);
+}
+
+.console {
+  position: absolute;
+  right: var(--gutter);
+  bottom: clamp(32px, 6vh, 64px);
+  display: grid;
+  justify-items: end;
+  gap: var(--space-4);
+  width: min(clamp(300px, 22vw, 420px), 100% - 2 * var(--gutter));
+}
+
+.gauge {
+  display: grid;
+  gap: var(--space-2);
+  width: 100%;
+}
+
+.gaugeHeader {
+  display: flex;
+  justify-content: space-between;
+  gap: var(--space-4);
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--text-2);
+}
+
+.gaugeValue {
+  font-variant-numeric: tabular-nums;
+  color: var(--gold);
+}
+
+/* Brass gauge with rivet ticks. */
+.track {
+  position: relative;
+  height: 6px;
+  overflow: hidden;
+  background:
+    repeating-linear-gradient(90deg, transparent 0 calc(10% - 1px), rgba(0, 0, 0, 0.6) calc(10% - 1px) 10%),
+    #1b1814;
+  border: 1px solid #3a3226;
+  border-radius: 1px;
+}
+
+.fill {
+  position: absolute;
+  inset: 0;
+  transform-origin: left;
+  background: linear-gradient(90deg, var(--brass), var(--gold) 70%, var(--gold-bright));
+  box-shadow: 0 0 12px rgba(229, 199, 127, 0.45);
+}
+
+.error {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  padding: var(--space-2) var(--space-3);
+  font-size: var(--text-sm);
+  color: var(--danger);
+  background: var(--danger-surface);
+  border-radius: var(--radius-sm);
+}
+
+@keyframes title-reveal {
+  from {
+    opacity: 0;
+    transform: translateY(10px);
+    filter: blur(4px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+    filter: none;
+  }
+}
+
+@media (max-width: 700px) {
+  .console {
+    left: var(--gutter);
+    width: auto;
+    justify-items: stretch;
+  }
+}

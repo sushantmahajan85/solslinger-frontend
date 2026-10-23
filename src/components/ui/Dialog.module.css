@@ -1,0 +1,145 @@
+.dialog {
+  width: min(100% - 32px, var(--dialog-width));
+  max-height: min(100dvh - 32px, 760px);
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: var(--text-1);
+  overflow: visible;
+}
+
+.sm {
+  --dialog-width: 420px;
+}
+
+.md {
+  --dialog-width: 520px;
+}
+
+.dialog[open] {
+  animation: dialog-in var(--dur-base) var(--ease-out);
+}
+
+.dialog::backdrop {
+  background: radial-gradient(ellipse at center, rgba(11, 11, 13, 0.72), rgba(11, 11, 13, 0.9));
+  backdrop-filter: blur(3px);
+  animation: fade-in var(--dur-base) var(--ease-out);
+}
+
+.panel {
+  position: relative;
+  display: grid;
+  gap: var(--space-4);
+  max-height: inherit;
+  overflow-y: auto;
+  padding: var(--space-8);
+  background:
+    linear-gradient(180deg, rgba(255, 255, 255, 0.025), transparent 120px),
+    var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-md);
+  box-shadow: var(--shadow-panel);
+}
+
+.panel::before {
+  content: '';
+  position: absolute;
+  inset: 0 var(--space-8) auto;
+  height: 1px;
+  background: var(--hairline-gold);
+}
+
+.themed .panel {
+  border-color: color-mix(in srgb, var(--faction-glow) 45%, var(--border));
+  box-shadow:
+    var(--shadow-panel),
+    0 0 48px color-mix(in srgb, var(--faction-glow) 14%, transparent);
+}
+
+.themed .panel::before {
+  background: linear-gradient(90deg, transparent, var(--faction-glow), transparent);
+}
+
+/* Four corner rivets — the iron-plate signature shared by all panels. */
+.rivets {
+  position: absolute;
+  inset: 9px;
+  pointer-events: none;
+  --rivet: radial-gradient(circle at center, #55555b 0 1.6px, #1f1f22 2.2px, transparent 2.8px);
+  background:
+    var(--rivet) top left / 6px 6px no-repeat,
+    var(--rivet) top right / 6px 6px no-repeat,
+    var(--rivet) bottom left / 6px 6px no-repeat,
+    var(--rivet) bottom right / 6px 6px no-repeat;
+}
+
+.header {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: var(--space-4);
+}
+
+.headings {
+  display: grid;
+  gap: var(--space-2);
+}
+
+.eyebrow {
+  font-size: var(--text-xs);
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--gold);
+}
+
+.themed .eyebrow {
+  color: var(--faction-secondary);
+}
+
+.title {
+  font-size: var(--text-h2);
+}
+
+.close {
+  margin: -6px -10px 0 0;
+}
+
+.description {
+  color: var(--text-2);
+  max-width: 60ch;
+}
+
+.body {
+  display: grid;
+  gap: var(--space-4);
+}
+
+.footer {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: var(--space-3);
+  padding-top: var(--space-2);
+}
+
+@keyframes dialog-in {
+  from {
+    opacity: 0;
+    transform: translateY(10px) scale(0.985);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@media (max-width: 560px) {
+  .panel {
+    padding: var(--space-6);
+  }
+
+  .footer > * {
+    flex: 1 1 100%;
+  }
+}

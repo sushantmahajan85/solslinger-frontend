@@ -1,0 +1,200 @@
+/* ---- Wallet list ---- */
+.walletList {
+  display: grid;
+  gap: var(--space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.walletOption {
+  display: grid;
+  grid-template-columns: auto 1fr auto auto;
+  align-items: center;
+  gap: var(--space-3);
+  width: 100%;
+  min-height: 56px;
+  padding: var(--space-3) var(--space-4);
+  background: var(--bg-1);
+  border: 1px solid var(--border-subtle);
+  border-radius: var(--radius-sm);
+  text-align: left;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.walletOption:hover {
+  border-color: var(--brass);
+  background: var(--surface-2);
+}
+
+.walletOption:active {
+  background: var(--bg-0);
+}
+
+.walletIcon {
+  border-radius: var(--radius-sm);
+}
+
+.walletName {
+  font-weight: 600;
+}
+
+.walletMeta {
+  font-size: var(--text-xs);
+  color: var(--success);
+}
+
+.walletArrow {
+  color: var(--text-3);
+  transition:
+    transform var(--dur-fast) var(--ease-out),
+    color var(--dur-fast) var(--ease-out);
+}
+
+.walletOption:hover .walletArrow {
+  color: var(--gold-bright);
+  transform: translateX(2px);
+}
+
+.noWallet {
+  display: grid;
+  justify-items: center;
+  gap: var(--space-2);
+  padding: var(--space-6) var(--space-4);
+  text-align: center;
+  background: var(--bg-1);
+  border: 1px dashed var(--border);
+  border-radius: var(--radius-sm);
+}
+
+.noWalletIcon {
+  display: grid;
+  place-items: center;
+  width: 44px;
+  height: 44px;
+  margin-bottom: var(--space-1);
+  border-radius: 50%;
+  color: var(--gold);
+  background: rgba(197, 161, 90, 0.1);
+}
+
+.noWalletTitle {
+  font-weight: 600;
+}
+
+.noWalletText {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+
+.installLinks {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: center;
+  gap: var(--space-4);
+  margin: var(--space-2) 0 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--text-sm);
+  font-weight: 600;
+}
+
+/* ---- Connected chip ---- */
+.chipRoot {
+  position: relative;
+}
+
+.chip {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-3);
+  background: rgba(18, 18, 20, 0.78);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  backdrop-filter: blur(8px);
+  font-size: var(--text-sm);
+  font-weight: 600;
+  white-space: nowrap;
+  transition:
+    border-color var(--dur-fast) var(--ease-out),
+    background-color var(--dur-fast) var(--ease-out);
+}
+
+.chip:hover,
+.chip[aria-expanded='true'] {
+  border-color: var(--brass);
+  background: rgba(30, 30, 34, 0.9);
+}
+
+.chipDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: var(--success);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--success) 18%, transparent);
+}
+
+.chipAddress {
+  font-variant-numeric: tabular-nums;
+  letter-spacing: 0.02em;
+}
+
+.menu {
+  position: absolute;
+  z-index: 40;
+  top: calc(100% + var(--space-2));
+  right: 0;
+  display: grid;
+  gap: var(--space-1);
+  width: 280px;
+  padding: var(--space-3);
+  background: var(--surface-1);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  box-shadow: var(--shadow-panel);
+  animation: fade-in var(--dur-fast) var(--ease-out);
+}
+
+.menuLabel {
+  padding: 0 var(--space-2);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--text-3);
+}
+
+.menuAddress {
+  padding: 0 var(--space-2) var(--space-2);
+  font-size: var(--text-xs);
+  color: var(--text-2);
+  word-break: break-all;
+  border-bottom: 1px solid var(--border-subtle);
+  margin-bottom: var(--space-1);
+}
+
+.menuItem {
+  display: flex;
+  align-items: center;
+  gap: var(--space-2);
+  height: 36px;
+  padding: 0 var(--space-2);
+  background: transparent;
+  border: 0;
+  border-radius: var(--radius-sm);
+  font-size: var(--text-sm);
+  text-align: left;
+  color: var(--text-1);
+}
+
+.menuItem:hover {
+  background: var(--surface-2);
+}
+
+.menuDanger {
+  color: var(--danger);
+}

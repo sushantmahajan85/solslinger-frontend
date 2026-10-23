@@ -1,0 +1,134 @@
+/* Bottom-right keeps notifications clear of the lobby's centre stage and hostess. */
+.region {
+  position: fixed;
+  z-index: 100;
+  right: var(--space-8);
+  bottom: var(--space-8);
+  display: grid;
+  gap: var(--space-3);
+  width: min(100% - 32px, 420px);
+  pointer-events: none;
+}
+
+@media (max-width: 640px) {
+  .region {
+    right: 16px;
+    bottom: 16px;
+  }
+}
+
+.toast {
+  --toast-accent: var(--gold);
+  position: relative;
+  display: grid;
+  grid-template-columns: auto 1fr auto;
+  align-items: start;
+  gap: var(--space-3);
+  padding: var(--space-4) var(--space-3) var(--space-4) var(--space-4);
+  background: rgba(20, 20, 23, 0.94);
+  border: 1px solid var(--border);
+  border-left: 2px solid var(--toast-accent);
+  border-radius: var(--radius-sm);
+  box-shadow: 0 18px 48px rgba(0, 0, 0, 0.6);
+  backdrop-filter: blur(10px);
+  overflow: hidden;
+  pointer-events: auto;
+  animation: toast-in var(--dur-base) var(--ease-out);
+}
+
+.success {
+  --toast-accent: var(--success);
+}
+
+.error {
+  --toast-accent: var(--danger);
+  background: rgba(32, 16, 21, 0.95);
+}
+
+.coming-soon {
+  --toast-accent: var(--faction-glow);
+  border-color: color-mix(in srgb, var(--faction-glow) 40%, var(--border));
+  border-left-color: var(--faction-glow);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.6),
+    0 0 32px color-mix(in srgb, var(--faction-glow) 16%, transparent);
+}
+
+.icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  margin-top: 1px;
+  border-radius: 50%;
+  color: var(--toast-accent);
+  background: color-mix(in srgb, var(--toast-accent) 12%, transparent);
+}
+
+.copy {
+  display: grid;
+  gap: 2px;
+  padding-top: 2px;
+}
+
+.eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: var(--tracking-label);
+  text-transform: uppercase;
+  color: var(--toast-accent);
+}
+
+.coming-soon .eyebrow {
+  color: var(--faction-secondary);
+}
+
+.title {
+  font-family: var(--font-display);
+  font-size: 17px;
+  font-weight: 600;
+  letter-spacing: 0.02em;
+  color: var(--text-1);
+}
+
+.message {
+  font-size: var(--text-sm);
+  color: var(--text-2);
+}
+
+.close {
+  width: 32px;
+  height: 32px;
+}
+
+.timer {
+  position: absolute;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  height: 2px;
+  background: var(--toast-accent);
+  opacity: 0.45;
+  transform-origin: left;
+  animation: timer linear forwards;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes timer {
+  from {
+    transform: scaleX(1);
+  }
+  to {
+    transform: scaleX(0);
+  }
+}

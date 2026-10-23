@@ -1,0 +1,252 @@
+/* ==========================================================================
+   Solslinger Studio — Cinematic Frontier Noir design tokens
+   Every component reads colour, type, spacing and motion from these tokens.
+   ========================================================================== */
+
+:root {
+  /* Base surfaces */
+  --bg-0: #0b0b0d;
+  --bg-1: #121214;
+  --surface-1: #19191c;
+  --surface-2: #222226;
+  --border: #343438;
+  --border-subtle: #27272b;
+
+  /* Typography colours */
+  --text-1: #f3efe6;
+  --text-2: #b9b3a8;
+  --text-3: #817b72;
+  --text-on-accent: #17130d;
+
+  /* Brand metallics */
+  --gold: #c5a15a;
+  --gold-bright: #e5c77f;
+  --brass: #806333;
+  --bronze: #65492d;
+
+  /* Faction palette */
+  --outlaws-primary: #d83b32;
+  --outlaws-secondary: #f0a344;
+  --outlaws-deep: #361613;
+  --vance-primary: #294b78;
+  --vance-secondary: #c4cbd4;
+  --vance-deep: #111d30;
+  --gamblers-primary: #17845a;
+  --gamblers-secondary: #d6b65d;
+  --gamblers-deep: #10251c;
+
+  /* Status colours — hues chosen to stay distinct from faction crimson and emerald.
+     Always paired with an icon and text, never colour alone. */
+  --danger: #f06a8a;
+  --danger-surface: #2a1219;
+  --success: #57c7b6;
+  --success-surface: #0f2522;
+  --info: #9fb3cf;
+
+  /* Active faction (defaults to brand gold until an allegiance is set) */
+  --faction-primary: var(--gold);
+  --faction-secondary: var(--gold-bright);
+  --faction-deep: #1c160c;
+  --faction-glow: var(--gold);
+
+  /* Typography */
+  --font-display: var(--font-cinzel), 'Times New Roman', serif;
+  --font-ui: var(--font-inter), system-ui, -apple-system, 'Segoe UI', sans-serif;
+  --text-hero: clamp(40px, 3.1vw, 64px);
+  --text-h1: clamp(32px, 2.5vw, 48px);
+  --text-h2: clamp(24px, 1.75vw, 32px);
+  --text-h3: clamp(18px, 1.25vw, 24px);
+  --text-body: 15px;
+  --text-sm: 13px;
+  --text-xs: 12px;
+  --tracking-display: 0.04em;
+  --tracking-label: 0.08em;
+
+  /* Spacing (4px grid) */
+  --space-1: 4px;
+  --space-2: 8px;
+  --space-3: 12px;
+  --space-4: 16px;
+  --space-6: 24px;
+  --space-8: 32px;
+  --space-12: 48px;
+  --space-16: 64px;
+  --space-24: 96px;
+
+  /* Radius — sharp, industrial */
+  --radius-sm: 2px;
+  --radius-md: 4px;
+  --radius-lg: 6px;
+
+  /* Depth */
+  --shadow-panel: 0 24px 64px rgba(0, 0, 0, 0.55), 0 2px 0 rgba(255, 255, 255, 0.02) inset;
+  --hairline-gold: linear-gradient(90deg, transparent, rgba(197, 161, 90, 0.55), transparent);
+
+  /* Motion */
+  --ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --ease-in-out: cubic-bezier(0.65, 0, 0.35, 1);
+  --dur-fast: 150ms;
+  --dur-base: 220ms;
+  --dur-slow: 480ms;
+  --dur-scene: 900ms;
+
+  /* Focus */
+  --focus-ring: 0 0 0 2px var(--bg-0), 0 0 0 4px var(--gold-bright);
+
+  /* Layout */
+  --content-max: 1440px;
+  --gutter: clamp(16px, 3.3vw, 64px);
+
+  color-scheme: dark;
+}
+
+[data-faction='outlaws'] {
+  --faction-primary: var(--outlaws-primary);
+  --faction-secondary: var(--outlaws-secondary);
+  --faction-deep: var(--outlaws-deep);
+  --faction-glow: #ff5a45;
+}
+
+[data-faction='vance'] {
+  --faction-primary: var(--vance-primary);
+  --faction-secondary: var(--vance-secondary);
+  --faction-deep: var(--vance-deep);
+  /* Navy alone disappears on dark surfaces; the glow is lifted toward chrome-blue. */
+  --faction-glow: #6f9bd6;
+}
+
+[data-faction='gamblers'] {
+  --faction-primary: var(--gamblers-primary);
+  --faction-secondary: var(--gamblers-secondary);
+  --faction-deep: var(--gamblers-deep);
+  --faction-glow: #2fbf86;
+}
+
+/* ---------- Reset ---------- */
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  padding: 0;
+}
+
+html {
+  -webkit-text-size-adjust: 100%;
+  text-size-adjust: 100%;
+}
+
+body {
+  min-height: 100dvh;
+  background: var(--bg-0);
+  color: var(--text-1);
+  font-family: var(--font-ui);
+  font-size: var(--text-body);
+  line-height: 1.55;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+h1,
+h2,
+h3,
+h4,
+p {
+  margin: 0;
+}
+
+h1,
+h2,
+h3 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: var(--tracking-display);
+  line-height: 1.15;
+  text-wrap: balance;
+}
+
+p {
+  text-wrap: pretty;
+}
+
+img {
+  display: block;
+  max-width: 100%;
+}
+
+button,
+input,
+select,
+textarea {
+  font: inherit;
+  color: inherit;
+}
+
+button {
+  cursor: pointer;
+}
+
+a {
+  color: var(--gold-bright);
+  text-underline-offset: 3px;
+}
+
+:focus-visible {
+  outline: none;
+  box-shadow: var(--focus-ring);
+}
+
+::selection {
+  background: rgba(197, 161, 90, 0.35);
+  color: var(--text-1);
+}
+
+.visually-hidden {
+  position: absolute !important;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Shared screen entrance */
+@keyframes screen-enter {
+  from {
+    opacity: 0;
+    transform: translateY(8px);
+  }
+  to {
+    opacity: 1;
+    transform: none;
+  }
+}
+
+@keyframes fade-in {
+  from {
+    opacity: 0;
+  }
+  to {
+    opacity: 1;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *,
+  *::before,
+  *::after {
+    animation-duration: 1ms !important;
+    animation-iteration-count: 1 !important;
+    transition-duration: 1ms !important;
+    scroll-behavior: auto !important;
+  }
+}
