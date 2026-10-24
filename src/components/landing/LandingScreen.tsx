@@ -140,16 +140,19 @@ export function LandingScreen() {
         </section>
 
         <div className={styles.art}>
+          <span className={styles.floorShadow} aria-hidden="true" />
           <div className={styles.float}>
             <div className={styles.tilt}>
+              <span className={styles.aura} aria-hidden="true" />
               <Image
                 src="/brand/logo.webp"
                 alt="Solslinger — a masked gunslinger with glowing eyes beneath a wide-brimmed hat"
-                width={640}
-                height={640}
-                priority
+                width={2048}
+                height={2048}
+                preload
+                quality={92}
                 className={styles.logo}
-                sizes="(max-width: 900px) 70vw, 40vw"
+                sizes="(max-width: 900px) 70vw, 600px"
               />
               <span className={styles.eyes} aria-hidden="true" />
               <span className={styles.glare} aria-hidden="true" />

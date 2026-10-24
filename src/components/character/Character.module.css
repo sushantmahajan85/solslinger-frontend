@@ -18,6 +18,12 @@
   min-width: 0;
 }
 
+/* Sits tight above the heading rather than a full roster gap away. */
+.back {
+  justify-self: start;
+  margin-bottom: calc(var(--space-6) * -1);
+}
+
 /* ---- Portrait grid ---- */
 /* Four columns, sized by whichever is tighter — width or height — so the roster fits in two rows. */
 .grid {

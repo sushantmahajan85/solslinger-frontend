@@ -181,25 +181,60 @@
 
 .float {
   width: min(100%, 600px);
+  transform-style: preserve-3d;
   animation: logo-float 7s var(--ease-in-out) infinite;
 }
 
 .tilt {
   position: relative;
   transform-style: preserve-3d;
-  transform: rotateY(calc(var(--px, 0) * 14deg)) rotateX(calc(var(--py, 0) * -10deg))
-    translate3d(calc(var(--px, 0) * -12px), calc(var(--py, 0) * -8px), 0);
+  transform: rotateY(calc(var(--px, 0) * 18deg)) rotateX(calc(var(--py, 0) * -12deg))
+    translate3d(calc(var(--px, 0) * -14px), calc(var(--py, 0) * -10px), 0);
   will-change: transform;
+}
+
+/* Warm backlight on a deeper plane; it slides against the tilt so the logo reads as a raised object. */
+.aura {
+  position: absolute;
+  inset: 6%;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(
+    circle at calc(50% - var(--px, 0) * 14%) calc(46% - var(--py, 0) * 12%),
+    rgba(214, 160, 62, 0.34),
+    rgba(150, 96, 30, 0.12) 46%,
+    transparent 68%
+  );
+  filter: blur(28px);
+  transform: translateZ(-90px) scale(1.08);
+}
+
+/* Contact shadow on the "floor"; it tightens as the logo bobs up. */
+.floorShadow {
+  position: absolute;
+  left: 50%;
+  bottom: 2%;
+  width: min(70%, 420px);
+  height: 46px;
+  pointer-events: none;
+  border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0, 0, 0, 0.75), transparent);
+  filter: blur(10px);
+  transform: translateX(calc(-50% + var(--px, 0) * -22px));
+  animation: shadow-breathe 7s var(--ease-in-out) infinite;
 }
 
 .logo {
   position: relative;
+  display: block;
   width: 100%;
   height: auto;
   /* Melts the logo's black plate into the page rather than showing a hard square. */
-  mask-image: radial-gradient(circle at 50% 48%, #000 52%, transparent 71%);
-  -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 52%, transparent 71%);
-  filter: drop-shadow(calc(var(--px, 0) * -18px) calc(var(--py, 0) * -14px + 24px) 32px rgba(0, 0, 0, 0.6));
+  mask-image: radial-gradient(circle at 50% 48%, #000 54%, transparent 71%);
+  -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 54%, transparent 71%);
+  filter: contrast(1.08) saturate(1.1) brightness(1.03);
+  transform: translateZ(0);
+  backface-visibility: hidden;
 }
 
 /* Ember glow over the gunslinger's eyes, breathing slowly. */
@@ -215,25 +250,40 @@
   animation: eyes-glow 3.4s var(--ease-in-out) infinite;
 }
 
-/* Specular sweep that follows the cursor across the gold lettering. */
+/* Specular highlight that follows the cursor. Overlay keeps blacks black, so only the gold
+   lettering and leather highlights catch the light — no milky haze over the dark plate. */
 .glare {
   position: absolute;
   inset: 0;
   pointer-events: none;
-  mix-blend-mode: screen;
-  background: radial-gradient(
-    circle at calc(50% + var(--px, 0) * 38%) calc(46% + var(--py, 0) * 34%),
-    rgba(255, 230, 170, 0.2),
-    transparent 42%
-  );
-  mask-image: radial-gradient(circle at 50% 48%, #000 52%, transparent 71%);
-  -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 52%, transparent 71%);
+  mix-blend-mode: overlay;
+  background:
+    linear-gradient(
+      calc(115deg + var(--px, 0) * 20deg),
+      transparent calc(38% + var(--px, 0) * 22%),
+      rgba(255, 214, 140, 0.55) calc(48% + var(--px, 0) * 22%),
+      transparent calc(58% + var(--px, 0) * 22%)
+    ),
+    radial-gradient(
+      circle at calc(50% + var(--px, 0) * 30%) calc(46% + var(--py, 0) * 28%),
+      rgba(255, 200, 120, 0.45),
+      transparent 38%
+    );
+  mask-image: radial-gradient(circle at 50% 48%, #000 54%, transparent 71%);
+  -webkit-mask-image: radial-gradient(circle at 50% 48%, #000 54%, transparent 71%);
   transform: translateZ(40px);
 }
 
 @keyframes logo-float {
   50% {
-    transform: translateY(-10px);
+    transform: translateY(-12px);
+  }
+}
+
+@keyframes shadow-breathe {
+  50% {
+    opacity: 0.55;
+    scale: 0.88 0.8;
   }
 }
 

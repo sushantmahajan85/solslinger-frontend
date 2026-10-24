@@ -1,30 +1,35 @@
 'use client';
 
 import Image from 'next/image';
-import { useEffect, useRef, useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { useEffect, useEffectEvent, useRef, useState } from 'react';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { Button } from '@/components/ui/Button';
 import { AlertIcon, ArrowRightIcon, SkipIcon } from '@/components/ui/Icons';
 import { Spinner } from '@/components/ui/Spinner';
 import { api } from '@/lib/api';
-import { useJourneyGuard, useSession } from '@/lib/session';
+import { routeFor, useJourneyGuard, useSession } from '@/lib/session';
 import { usePointerParallax } from '@/lib/usePointerParallax';
 import { useReducedMotion } from '@/lib/useReducedMotion';
 import type { TrainSceneHandle } from './trainScene';
 import styles from './Onboarding.module.css';
 
 const ARRIVAL_SECONDS = 7;
+// Without the animated crossing (reduced motion or no WebGL), hold the still frame briefly before moving on.
+const STILL_HOLD_MS = 1800;
 
 export function OnboardingScreen() {
-  const allowed = useJourneyGuard('onboarding');
-  const { token, setProfile } = useSession();
+  // Travellers who already arrived may ride in again (Back from Allegiance); nothing is re-saved.
+  const allowed = useJourneyGuard('onboarding', { revisitable: true });
+  const { token, profile, setProfile } = useSession();
+  const router = useRouter();
+  const replay = !!profile && profile.nextStep !== 'onboarding';
   const reducedMotion = useReducedMotion();
   const hostRef = useRef<HTMLDivElement>(null);
   const [sceneState, setSceneState] = useState<'loading' | 'ready' | 'fallback'>('loading');
   const [progress, setProgress] = useState(0);
   const [leaving, setLeaving] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const continueRef = useRef<HTMLButtonElement>(null);
   const screenRef = useRef<HTMLDivElement>(null);
   usePointerParallax(screenRef, allowed);
 
@@ -73,25 +78,34 @@ export function OnboardingScreen() {
 
   const arrived = progress >= 100;
 
-  useEffect(() => {
-    if (arrived) continueRef.current?.focus({ preventScroll: true });
-  }, [arrived]);
-
   const finish = async () => {
-    if (!token || leaving) return;
+    if (!token || !profile || leaving) return;
     setLeaving(true);
     setError(null);
+    const fadeOut = new Promise((resolve) => setTimeout(resolve, reducedMotion ? 0 : 520));
+    if (replay) {
+      await fadeOut;
+      router.replace(routeFor(profile.nextStep));
+      return;
+    }
     try {
-      const [{ profile }] = await Promise.all([
-        api.completeOnboarding(token),
-        new Promise((resolve) => setTimeout(resolve, reducedMotion ? 0 : 520)),
-      ]);
-      setProfile(profile);
+      const [{ profile: updated }] = await Promise.all([api.completeOnboarding(token), fadeOut]);
+      setProfile(updated);
+      router.replace(routeFor(updated.nextStep));
     } catch (err) {
       setLeaving(false);
       setError(err instanceof Error ? err.message : 'Could not save your arrival. Try again.');
     }
   };
+
+  // Once the train has steamed off the right edge, move on by itself.
+  const finishOnArrival = useEffectEvent(() => void finish());
+  const animated = sceneState === 'ready' && !reducedMotion;
+  useEffect(() => {
+    if (!arrived) return;
+    const timer = setTimeout(finishOnArrival, animated ? 0 : STILL_HOLD_MS);
+    return () => clearTimeout(timer);
+  }, [arrived, animated]);
 
   if (!allowed) {
     return (
@@ -107,7 +121,7 @@ export function OnboardingScreen() {
 
       {sceneState === 'fallback' ? (
         <div className={styles.fallback} aria-hidden="true">
-          <Image src="/scene/train.webp" alt="" fill priority sizes="100vw" className={styles.fallbackTrain} />
+          <Image src="/scene/train-east.webp" alt="" fill preload sizes="100vw" className={styles.fallbackTrain} />
         </div>
       ) : null}
       {sceneState === 'loading' ? <div className={styles.curtain} aria-hidden="true" /> : null}
@@ -122,7 +136,7 @@ export function OnboardingScreen() {
       </header>
 
       <section className={styles.titleBlock} aria-labelledby="onboarding-title">
-        <p className={styles.eyebrow}>The Vance Line · Westbound</p>
+        <p className={styles.eyebrow}>The Vance Line · Eastbound</p>
         <h1 id="onboarding-title" className={styles.title}>
           Next stop: Solslinger
         </h1>
@@ -134,7 +148,9 @@ export function OnboardingScreen() {
       <div className={styles.console}>
         <div className={styles.gauge}>
           <div className={styles.gaugeHeader}>
-            <span className={styles.gaugeLabel}>{arrived ? 'Solslinger Station dead ahead' : 'Full steam on the Vance Line'}</span>
+            <span className={styles.gaugeLabel} aria-live="polite">
+              {arrived ? 'Arriving at Solslinger…' : 'Full steam on the Vance Line'}
+            </span>
             <span className={styles.gaugeValue} aria-hidden="true">
               {progress}%
             </span>
@@ -150,23 +166,23 @@ export function OnboardingScreen() {
             <span className={styles.fill} style={{ transform: `scaleX(${progress / 100})` }} />
           </div>
         </div>
-        <Button
-          ref={continueRef}
-          size="lg"
-          disabled={!arrived}
-          loading={leaving}
-          loadingLabel="Jumping off…"
-          icon={<ArrowRightIcon size={18} />}
-          iconPosition="end"
-          onClick={finish}
-        >
-          Jump off at Solslinger
-        </Button>
         {error ? (
-          <p className={styles.error} role="alert">
-            <AlertIcon size={16} />
-            {error}
-          </p>
+          <>
+            <p className={styles.error} role="alert">
+              <AlertIcon size={16} />
+              {error}
+            </p>
+            <Button
+              size="lg"
+              loading={leaving}
+              loadingLabel="Jumping off…"
+              icon={<ArrowRightIcon size={18} />}
+              iconPosition="end"
+              onClick={finish}
+            >
+              Try again
+            </Button>
+          </>
         ) : null}
       </div>
     </div>

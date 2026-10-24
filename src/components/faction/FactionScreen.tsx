@@ -1,22 +1,26 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { JourneyShell } from '@/components/layout/JourneyShell';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
 import { Checkbox } from '@/components/ui/Field';
-import { AlertIcon, LockIcon } from '@/components/ui/Icons';
+import { AlertIcon, ArrowLeftIcon, ArrowRightIcon, LockIcon } from '@/components/ui/Icons';
 import { SectionHeading, StatePanel } from '@/components/ui/Status';
 import { Spinner } from '@/components/ui/Spinner';
 import { api } from '@/lib/api';
-import { useJourneyGuard, useSession } from '@/lib/session';
+import { routeFor, useJourneyGuard, useSession } from '@/lib/session';
 import type { Faction } from '@/lib/types';
 import { FactionCard } from './FactionCard';
 import styles from './Faction.module.css';
 
 export function FactionScreen() {
-  const allowed = useJourneyGuard('faction');
-  const { token, setProfile } = useSession();
+  // Opened again via Back from Identity, the screen is read-only: allegiance is sworn for life.
+  const allowed = useJourneyGuard('faction', { revisitable: true });
+  const { token, profile, setProfile } = useSession();
+  const sworn = profile && profile.nextStep !== 'faction' ? profile.faction : null;
+  const router = useRouter();
   const [factions, setFactions] = useState<Faction[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
   const [selected, setSelected] = useState<string | null>(null);
@@ -39,15 +43,17 @@ export function FactionScreen() {
     if (allowed) load();
   }, [allowed, load]);
 
-  const chosen = factions?.find((f) => f.slug === selected) ?? null;
+  const selectedSlug = sworn?.slug ?? selected;
+  const chosen = factions?.find((f) => f.slug === selectedSlug) ?? null;
 
   const swear = async () => {
     if (!token || !chosen) return;
     setSubmitting(true);
     setSubmitError(null);
     try {
-      const { profile } = await api.chooseFaction(token, chosen.slug);
-      setProfile(profile);
+      const { profile: updated } = await api.chooseFaction(token, chosen.slug);
+      setProfile(updated);
+      router.replace(routeFor(updated.nextStep));
     } catch (err) {
       setSubmitError(err instanceof Error ? err.message : 'Your allegiance could not be recorded.');
       setSubmitting(false);
@@ -69,8 +75,12 @@ export function FactionScreen() {
           as="h1"
           align="center"
           eyebrow="Allegiance"
-          title="Choose your faction"
-          description="Three powers hold the territory. Your allegiance colours every table you sit at, and it is sworn for life."
+          title={sworn ? 'Your allegiance' : 'Choose your faction'}
+          description={
+            sworn
+              ? `You rode in with ${sworn.name}. Allegiance is sworn for life, so it can no longer be changed.`
+              : 'Three powers hold the territory. Your allegiance colours every table you sit at, and it is sworn for life.'
+          }
         />
 
         {loadError ? (
@@ -86,8 +96,9 @@ export function FactionScreen() {
               <FactionCard
                 key={faction.slug}
                 faction={faction}
-                checked={selected === faction.slug}
-                dimmed={selected !== null && selected !== faction.slug}
+                checked={selectedSlug === faction.slug}
+                dimmed={selectedSlug !== null && selectedSlug !== faction.slug}
+                locked={!!sworn}
                 onSelect={() => setSelected(faction.slug)}
               />
             ))}
@@ -95,28 +106,45 @@ export function FactionScreen() {
         )}
 
         <div className={styles.actionBar} data-faction={chosen?.themeKey}>
-          <p className={styles.permanence}>
-            <LockIcon size={16} />
-            Allegiance is permanent. Choose with care.
-          </p>
-          <Button
-            variant={chosen ? 'faction' : 'primary'}
-            size="lg"
-            disabled={!chosen}
-            onClick={() => {
-              setAcknowledged(false);
-              setSubmitError(null);
-              setConfirmOpen(true);
-            }}
-          >
-            {chosen ? `Swear allegiance to ${chosen.name}` : 'Select a faction'}
-          </Button>
+          <div className={styles.actionStart}>
+            <Button variant="ghost" icon={<ArrowLeftIcon size={16} />} onClick={() => router.push(routeFor('onboarding'))}>
+              Back
+            </Button>
+            <p className={styles.permanence}>
+              <LockIcon size={16} />
+              {sworn ? `Sworn to ${sworn.name} for life.` : 'Allegiance is permanent. Choose with care.'}
+            </p>
+          </div>
+          {sworn && profile ? (
+            <Button
+              variant="faction"
+              size="lg"
+              icon={<ArrowRightIcon size={18} />}
+              iconPosition="end"
+              onClick={() => router.push(routeFor(profile.nextStep))}
+            >
+              Continue
+            </Button>
+          ) : (
+            <Button
+              variant={chosen ? 'faction' : 'primary'}
+              size="lg"
+              disabled={!chosen}
+              onClick={() => {
+                setAcknowledged(false);
+                setSubmitError(null);
+                setConfirmOpen(true);
+              }}
+            >
+              {chosen ? `Swear allegiance to ${chosen.name}` : 'Select a faction'}
+            </Button>
+          )}
         </div>
       </div>
 
       <div data-faction={chosen?.themeKey}>
         <Dialog
-          open={confirmOpen && !!chosen}
+          open={confirmOpen && !!chosen && !sworn}
           onClose={() => setConfirmOpen(false)}
           locked={submitting}
           themed

@@ -33,10 +33,10 @@ export const LOBBY_NODES: LobbyNodeConfig[] = [
     label: 'Shoot Your Shot',
     area: 'Social lounge',
     comingSoon: 'Gwen is still setting the bar. The social lounge opens soon.',
-    region: { left: 39, top: 15, width: 22, height: 83 },
-    plaque: { x: 50, y: 7.5 },
+    region: { left: 39, top: 26, width: 22, height: 38 },
+    plaque: { x: 50, y: 18 },
     style: 'hanging',
-    depth: 20,
+    depth: 8,
   },
   {
     id: 'blackjack',

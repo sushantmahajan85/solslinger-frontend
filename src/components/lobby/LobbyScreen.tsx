@@ -83,17 +83,19 @@ export function LobbyScreen() {
             </div>
           </div>
 
-          <img
-            src="/scene/hostess.webp"
-            alt=""
-            aria-hidden="true"
-            width={1200}
-            height={1600}
-            className={styles.hostess}
-            data-active={active === 'social' || undefined}
-            fetchPriority="high"
-            {...track('hostess')}
-          />
+          {/* Gwen stands behind the bar: the well is cut at the counter top, so the counter hides her legs. */}
+          <div className={styles.hostessWell} aria-hidden="true">
+            <img
+              src="/scene/hostess.webp"
+              alt=""
+              width={1200}
+              height={1600}
+              className={styles.hostess}
+              data-active={active === 'social' || undefined}
+              fetchPriority="high"
+              {...track('hostess')}
+            />
+          </div>
 
           <nav className={styles.nodes} aria-label="Saloon stations">
             {LOBBY_NODES.map((node) => (

@@ -113,12 +113,13 @@
 
 .console {
   position: absolute;
-  right: var(--gutter);
+  left: 50%;
   bottom: clamp(32px, 6vh, 64px);
+  translate: -50% 0;
   display: grid;
-  justify-items: end;
+  justify-items: center;
   gap: var(--space-4);
-  width: min(clamp(300px, 22vw, 420px), 100% - 2 * var(--gutter));
+  width: min(clamp(320px, 34vw, 560px), 100% - 2 * var(--gutter));
 }
 
 .gauge {
@@ -190,6 +191,8 @@
 @media (max-width: 700px) {
   .console {
     left: var(--gutter);
+    right: var(--gutter);
+    translate: none;
     width: auto;
     justify-items: stretch;
   }

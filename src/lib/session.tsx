@@ -202,14 +202,25 @@ export function useSession() {
  * Keeps each screen reachable only at the right point of the journey.
  * Returns true once the visitor belongs on this screen.
  */
-export function useJourneyGuard(step: NextStep) {
+const STEP_ORDER: NextStep[] = ['onboarding', 'faction', 'character', 'lobby'];
+
+/**
+ * Keeps the visitor on the step their passport is at. With `revisitable`, a step they have already
+ * completed may be opened again (e.g. replaying the arrival); later steps still redirect back.
+ */
+export function useJourneyGuard(step: NextStep, { revisitable = false }: { revisitable?: boolean } = {}) {
   const { status, profile } = useSession();
   const router = useRouter();
+  const allowed =
+    status === 'signed-in' &&
+    !!profile &&
+    (profile.nextStep === step ||
+      (revisitable && STEP_ORDER.indexOf(profile.nextStep) > STEP_ORDER.indexOf(step)));
 
   useEffect(() => {
     if (status === 'signed-out') router.replace('/');
-    else if (status === 'signed-in' && profile && profile.nextStep !== step) router.replace(routeFor(profile.nextStep));
-  }, [status, profile, step, router]);
+    else if (status === 'signed-in' && profile && !allowed) router.replace(routeFor(profile.nextStep));
+  }, [status, profile, allowed, router]);
 
-  return status === 'signed-in' && profile?.nextStep === step;
+  return allowed;
 }

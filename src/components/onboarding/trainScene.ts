@@ -4,23 +4,30 @@ import { Application, Container, Graphics, Sprite, Texture } from 'pixi.js';
 const DESIGN_W = 1920;
 const DESIGN_H = 1080;
 const HORIZON_Y = 640;
-const TRAIN_SRC = '/scene/train.webp';
+// Eastbound artwork: the supplied train mirrored to face right, with its lettering kept readable.
+const TRAIN_SRC = '/scene/train-east.webp';
 // Points in the train artwork's own pixel coordinates.
-const STACK = { x: 566, y: 212 };
-const HEADLAMP = { x: 352, y: 252 };
-// Wheel-on-rail contact points, following the rail line in the artwork (falls ~0.105px per px to the right).
-const WHEEL_CONTACTS = [440, 650, 870, 990, 1110, 1230, 1560, 1700].map((x) => ({ x, y: 905 - (x - 440) * 0.105 }));
-// Leaves the top-left free for the title and the bottom-right free for the arrival console.
-const TRAIN_SCALE = 0.74;
-const TRAIN_OFFSET = { x: 100, y: 236 };
+const STACK = { x: 1353, y: 212 };
+const HEADLAMP = { x: 1567, y: 252 };
+// Wheel-on-rail contact points, following the rail line in the artwork.
+const WHEEL_CONTACTS = [440, 650, 870, 990, 1110, 1230, 1560, 1700].map((x) => ({ x: 1919 - x, y: 905 - (x - 440) * 0.105 }));
+// The artwork's rail: centre line drops RAIL_SLOPE px per px to the right, and the band widens
+// with perspective from RAIL_THICKNESS.tail (at the tender) to RAIL_THICKNESS.nose.
+const RAIL_SLOPE = 0.109;
+const RAIL_CENTER = { x: 9, y: 761 };
+const RAIL_THICKNESS = { tail: 34, nose: 68 };
+// Artwork x-range the train body occupies (tender rear to cowcatcher).
+const BODY = { tail: 24, nose: 1800 };
+const TRAIN_SCALE = 0.62;
+// The train runs along a fixed scene line: ty = TRACK_C + RAIL_SLOPE * tx keeps its own rail on the
+// static track below, so it travels "down" the rail as it crosses from left to right.
+const TRACK_C = 264;
 
-const CRUISE_SPEED = 1700; // design px / second at full steam
-const LAUNCH_SPEED = 700;
-const SPIN_UP_SECONDS = 1.6;
+const CRUISE_SPEED = 600; // design px / second the scenery pans at
 
 export interface TrainSceneOptions {
   reducedMotion: boolean;
-  /** Seconds until the arrival progress reaches 100%. The train keeps running after that. */
+  /** Seconds the train takes to cross from off-screen left to off-screen right (progress 0 → 100%). */
   arrivalSeconds: number;
   onProgress?: (progress: number) => void;
 }
@@ -136,7 +143,37 @@ function telegraphPoles(count: number, color: number) {
   return layer;
 }
 
-const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+/**
+ * The static track the train runs on, drawn to match the artwork's rail at the train's mid-crossing
+ * pose: a dark far rail and a worn steel near rail, widening towards the camera on the right.
+ */
+function track() {
+  const midX = DESIGN_W / 2 - (TRAIN_SCALE * DESIGN_W) / 2;
+  const centerY = (x: number) =>
+    TRACK_C + TRAIN_SCALE * (RAIL_CENTER.y - RAIL_SLOPE * RAIL_CENTER.x) + RAIL_SLOPE * x;
+  const thickness = (x: number) => {
+    const artX = (x - midX) / TRAIN_SCALE;
+    const t = (artX - RAIL_CENTER.x) / (DESIGN_W - 2 * RAIL_CENTER.x);
+    return TRAIN_SCALE * Math.max(10, RAIL_THICKNESS.tail + (RAIL_THICKNESS.nose - RAIL_THICKNESS.tail) * t);
+  };
+  const band = (from: number, to: number) => {
+    const xs = [-200, DESIGN_W + 200];
+    const top = xs.map((x) => [x, centerY(x) + thickness(x) * (from - 0.5)]);
+    const bottom = xs.map((x) => [x, centerY(x) + thickness(x) * (to - 0.5)]).reverse();
+    return [...top, ...bottom].flat();
+  };
+  return new Graphics()
+    .poly(band(-0.1, 1.08))
+    .fill({ color: 0x0a0806, alpha: 0.85 })
+    .poly(band(0, 0.16))
+    .fill({ color: 0x3a3229 })
+    .poly(band(0.5, 1))
+    .fill({ color: 0x6f6556 })
+    .poly(band(0.5, 0.6))
+    .fill({ color: 0x9a8d78 });
+}
+
+const lerp = (a: number, b: number, t: number) => a + (b - a) * t;
 
 interface Particle {
   sprite: Sprite;
@@ -223,16 +260,20 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
   const smokeLayer = new Container();
   camera.addChild(smokeLayer);
 
+  // Track and train share one pointer-parallax layer, so the train never slips off its rails.
+  const trackLayer = new Container();
+  trackLayer.addChild(track());
+
   const trainLayer = new Container();
-  trainLayer.position.set(TRAIN_OFFSET.x, TRAIN_OFFSET.y);
   trainLayer.scale.set(TRAIN_SCALE);
   trainLayer.addChild(new Sprite(trainTexture));
 
+  // The beam texture points left from its tip; flipped, it throws light ahead of the train.
   const beam = new Sprite(make(beamTexture()));
   beam.anchor.set(1, 0.5);
   beam.position.set(HEADLAMP.x, HEADLAMP.y + 6);
-  beam.scale.set(2.4, 1.6);
-  beam.rotation = -0.06;
+  beam.scale.set(-2.4, 1.6);
+  beam.rotation = 0.06;
   beam.blendMode = 'add';
   trainLayer.addChild(beam);
 
@@ -242,7 +283,12 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
   headlamp.scale.set(1.1);
   headlamp.blendMode = 'add';
   trainLayer.addChild(headlamp);
-  camera.addChild(trainLayer);
+  trackLayer.addChild(trainLayer);
+  camera.addChild(trackLayer);
+
+  // Enters with the cowcatcher just off-screen left, ends with the tender just off-screen right.
+  const startX = -TRAIN_SCALE * BODY.nose - 120;
+  const endX = DESIGN_W + 120 - TRAIN_SCALE * BODY.tail;
 
   // Sparks and track dust fly in front of the wheels.
   const fxLayer = new Container();
@@ -283,8 +329,8 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
   const particles: Particle[] = [];
 
   const toScene = (p: { x: number; y: number }) => ({
-    x: trainLayer.x + p.x * trainLayer.scale.x,
-    y: trainLayer.y + p.y * trainLayer.scale.y,
+    x: trackLayer.x + trainLayer.x + p.x * trainLayer.scale.x,
+    y: trackLayer.y + trainLayer.y + p.y * trainLayer.scale.y,
   });
 
   const spawn = (layer: Container, texture: Texture, at: { x: number; y: number }, p: Omit<Particle, 'sprite' | 'age'>) => {
@@ -327,15 +373,16 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
     const dt = Math.min(app.ticker.deltaMS / 1000, 0.05);
     const elapsed = (performance.now() - startedAt) / 1000;
     const progress = options.reducedMotion ? 1 : Math.min(1, elapsed / options.arrivalSeconds);
-    const spin = options.reducedMotion ? 1 : easeOutCubic(Math.min(1, elapsed / SPIN_UP_SECONDS));
-    const speed = LAUNCH_SPEED + (CRUISE_SPEED - LAUNCH_SPEED) * spin;
-    const intensity = speed / CRUISE_SPEED;
+    // Reduced motion shows a single still with the train mid-crossing.
+    const travel = options.reducedMotion ? 0.5 : progress;
+    const speed = CRUISE_SPEED;
 
     pointer.x += (pointer.tx - pointer.x) * 0.06;
     pointer.y += (pointer.ty - pointer.y) * 0.06;
 
+    // Eastbound: the camera pans with the train, so the land slides away to the left.
     for (const layer of layers) {
-      layer.x = (layer.x + speed * layer.speed * dt) % DESIGN_W;
+      layer.x = (((layer.x - speed * layer.speed * dt) % DESIGN_W) + DESIGN_W) % DESIGN_W;
       layer.node.x = layer.x - DESIGN_W - pointer.x * layer.depth;
       layer.node.y = -pointer.y * layer.depth * 0.4;
     }
@@ -343,28 +390,28 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
     sky.x = -100 - pointer.x * 3;
 
     for (const streak of streaks) {
-      streak.sprite.x += speed * streak.rate * dt;
-      if (streak.sprite.x > DESIGN_W + 200) streak.sprite.x = -520 - Math.random() * 400;
-      streak.sprite.alpha = streak.alpha * (0.6 + intensity * 0.4);
+      streak.sprite.x -= speed * streak.rate * dt;
+      if (streak.sprite.x < -720) streak.sprite.x = DESIGN_W + 200 + Math.random() * 400;
+      streak.sprite.alpha = streak.alpha;
     }
 
-    // Hard-running locomotive: fast rail chatter, rocking, and a nose-forward pitch.
+    // The train crosses the frame along the track; chatter and rocking ride on top of that path.
     const chatter = Math.sin(elapsed * 31) * 1.6 + Math.sin(elapsed * 53) * 0.9 + (Math.random() - 0.5) * 1.4;
-    trainLayer.x = TRAIN_OFFSET.x + pointer.x * 18 + Math.sin(elapsed * 7.3) * 1.5 * intensity;
-    trainLayer.y = TRAIN_OFFSET.y + pointer.y * 10 + chatter * intensity;
-    trainLayer.rotation = (Math.sin(elapsed * 4.1) * 0.0022 + Math.sin(elapsed * 11) * 0.0012) * intensity;
-    const push = options.reducedMotion ? 1 : 1 + easeOutCubic(Math.min(1, elapsed / 10)) * 0.04;
-    trainLayer.scale.set(TRAIN_SCALE * push);
+    const tx = lerp(startX, endX, travel);
+    trackLayer.position.set(pointer.x * 18, pointer.y * 10);
+    trainLayer.x = tx + Math.sin(elapsed * 7.3) * 1.5;
+    trainLayer.y = TRACK_C + RAIL_SLOPE * tx + chatter;
+    trainLayer.rotation = Math.sin(elapsed * 4.1) * 0.0022 + Math.sin(elapsed * 11) * 0.0012;
 
     headlamp.alpha = 0.8 + Math.sin(elapsed * 13) * 0.08 + (Math.random() - 0.5) * 0.12;
     beam.alpha = 0.55 + Math.sin(elapsed * 9) * 0.08;
 
-    // Camera shake that scales with speed.
-    camera.position.set((Math.random() - 0.5) * 2.4 * intensity, (Math.random() - 0.5) * 2 * intensity);
+    // Camera shake from the running train.
+    camera.position.set((Math.random() - 0.5) * 2.4, (Math.random() - 0.5) * 2);
 
     for (const mote of motes) {
-      mote.sprite.x += speed * mote.drift * dt;
-      if (mote.sprite.x > DESIGN_W + 20) mote.sprite.x = -20;
+      mote.sprite.x -= speed * mote.drift * dt;
+      if (mote.sprite.x < -20) mote.sprite.x = DESIGN_W + 20;
       mote.sprite.y += Math.sin(elapsed * 1.6 + mote.phase) * 10 * dt;
     }
 
@@ -376,7 +423,7 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
         const dark = Math.random() < 0.45;
         spawn(smokeLayer, dark ? smokeTexture : steamTexture, { x: stack.x + Math.random() * 8, y: stack.y }, {
           life: 1.6 + Math.random() * 1.2,
-          vx: 380 + speed * 0.42 + Math.random() * 120,
+          vx: -60 - speed * 0.25 - Math.random() * 120,
           vy: -150 - Math.random() * 90,
           gravity: 70,
           grow: 1.6 + Math.random() * 1.2,
@@ -385,13 +432,13 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
         });
       }
 
-      sparkClock += dt * 26 * intensity;
+      sparkClock += dt * 26;
       while (sparkClock >= 1) {
         sparkClock -= 1;
         const contact = toScene(WHEEL_CONTACTS[Math.floor(Math.random() * WHEEL_CONTACTS.length)]);
         spawn(fxLayer, sparkTexture, contact, {
           life: 0.35 + Math.random() * 0.35,
-          vx: 380 + Math.random() * 520,
+          vx: -(200 + Math.random() * 420),
           vy: -120 - Math.random() * 260,
           gravity: 1400,
           grow: -0.2,
@@ -400,13 +447,13 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
         });
       }
 
-      dustClock += dt * 14 * intensity;
+      dustClock += dt * 14;
       while (dustClock >= 1) {
         dustClock -= 1;
         const contact = toScene(WHEEL_CONTACTS[Math.floor(Math.random() * WHEEL_CONTACTS.length)]);
         spawn(fxLayer, dustTexture, { x: contact.x, y: contact.y + 10 }, {
           life: 0.9 + Math.random() * 0.8,
-          vx: 260 + speed * 0.3,
+          vx: -(120 + speed * 0.2),
           vy: -40 - Math.random() * 40,
           gravity: 0,
           grow: 1.4,

@@ -1,14 +1,15 @@
 'use client';
 
+import { useRouter } from 'next/navigation';
 import { useCallback, useEffect, useState } from 'react';
 import { JourneyShell } from '@/components/layout/JourneyShell';
 import { Button } from '@/components/ui/Button';
 import { Dialog } from '@/components/ui/Dialog';
-import { AlertIcon } from '@/components/ui/Icons';
+import { AlertIcon, ArrowLeftIcon } from '@/components/ui/Icons';
 import { SectionHeading, StatePanel } from '@/components/ui/Status';
 import { Spinner } from '@/components/ui/Spinner';
 import { api } from '@/lib/api';
-import { useJourneyGuard, useSession } from '@/lib/session';
+import { routeFor, useJourneyGuard, useSession } from '@/lib/session';
 import type { Character } from '@/lib/types';
 import { BountyDossier } from './BountyDossier';
 import { CharacterCard } from './CharacterCard';
@@ -17,6 +18,7 @@ import styles from './Character.module.css';
 export function CharacterScreen() {
   const allowed = useJourneyGuard('character');
   const { token, profile, setProfile } = useSession();
+  const router = useRouter();
   const faction = profile?.faction ?? null;
   const [characters, setCharacters] = useState<Character[] | null>(null);
   const [loadError, setLoadError] = useState<string | null>(null);
@@ -70,6 +72,14 @@ export function CharacterScreen() {
     <JourneyShell current="character" faction={faction.themeKey}>
       <div className={styles.layout}>
         <section className={styles.roster} aria-labelledby="character-title">
+          <Button
+            variant="ghost"
+            icon={<ArrowLeftIcon size={16} />}
+            className={styles.back}
+            onClick={() => router.push(routeFor('faction'))}
+          >
+            Back to allegiance
+          </Button>
           <SectionHeading
             as="h1"
             id="character-title"

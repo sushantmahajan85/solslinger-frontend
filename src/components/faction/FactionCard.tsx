@@ -6,11 +6,14 @@ export function FactionCard({
   faction,
   checked,
   dimmed,
+  locked = false,
   onSelect,
 }: {
   faction: Faction;
   checked: boolean;
   dimmed: boolean;
+  /** Allegiance already sworn: the card is shown but cannot be selected. */
+  locked?: boolean;
   onSelect: () => void;
 }) {
   const inputId = `faction-${faction.slug}`;
@@ -19,6 +22,7 @@ export function FactionCard({
       htmlFor={inputId}
       className={`${styles.card} ${checked ? styles.checked : ''} ${dimmed ? styles.dimmed : ''}`}
       data-faction={faction.themeKey}
+      data-locked={locked || undefined}
     >
       <input
         id={inputId}
@@ -26,6 +30,7 @@ export function FactionCard({
         name="faction"
         value={faction.slug}
         checked={checked}
+        disabled={locked}
         onChange={onSelect}
         className={styles.radio}
         aria-describedby={`${inputId}-description`}
