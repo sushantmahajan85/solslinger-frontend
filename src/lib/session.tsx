@@ -54,7 +54,10 @@ const friendlyWalletError = (err: unknown) => {
   const message = (err as { message?: string })?.message ?? '';
   if (/reject|denied|cancel/i.test(`${name} ${message}`)) return 'Signature request was declined in your wallet.';
   if (err instanceof ApiError) return err.message;
-  return 'We could not verify your wallet. Please try again.';
+  console.error('[session] wallet sign-in failed', err);
+  return message
+    ? `Your wallet could not sign in: ${message}`
+    : 'We could not verify your wallet. Please try again.';
 };
 
 export function SessionProvider({ children }: { children: React.ReactNode }) {
