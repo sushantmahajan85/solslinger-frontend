@@ -43,9 +43,18 @@ const post = <T>(path: string, body: unknown, token?: string | null) =>
 
 export const api = {
   requestNonce: (walletAddress: string) =>
-    post<{ nonce: string; message: string; expiresAt: string }>('/auth/nonce', { walletAddress }),
-  verify: (payload: { walletAddress: string; nonce: string; signature: string; ageConfirmed: boolean }) =>
-    post<{ token: string; profile: Profile }>('/auth/verify', payload),
+    post<{ nonce: string; message: string; expiresAt: string; usernameRequired: boolean }>('/auth/nonce', {
+      walletAddress,
+    }),
+  usernameAvailable: (username: string) =>
+    request<{ available: boolean; reason?: string }>(`/auth/username-available?username=${encodeURIComponent(username)}`),
+  verify: (payload: {
+    walletAddress: string;
+    nonce: string;
+    signature: string;
+    ageConfirmed: boolean;
+    username?: string;
+  }) => post<{ token: string; profile: Profile }>('/auth/verify', payload),
   me: (token: string) => request<{ profile: Profile }>('/me', { token }),
   completeOnboarding: (token: string) => post<{ profile: Profile }>('/me/onboarding/complete', {}, token),
   chooseFaction: (token: string, faction: string) =>

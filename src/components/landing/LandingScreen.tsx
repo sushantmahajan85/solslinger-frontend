@@ -16,6 +16,7 @@ import type { NextStep } from '@/lib/types';
 import { usePointerParallax } from '@/lib/usePointerParallax';
 import { AgeGateDialog } from './AgeGateDialog';
 import styles from './Landing.module.css';
+import { UsernameDialog } from './UsernameDialog';
 
 const NEXT_STEP_LABEL: Record<NextStep, string> = {
   onboarding: 'Board the Vance Line',
@@ -67,6 +68,7 @@ export function LandingScreen() {
   const ageStep = ageConfirmed ? 'success' : 'idle';
   const walletStep =
     status === 'signed-in' || wallet.connected ? 'success' : walletBusy ? 'pending' : 'idle';
+  const nameStep = status === 'signed-in' ? 'success' : session.usernamePrompt ? 'pending' : 'idle';
   const signStep = status === 'signed-in' ? 'success' : status === 'signing-in' ? 'pending' : error ? 'error' : 'idle';
 
   return (
@@ -145,7 +147,11 @@ export function LandingScreen() {
                 </Button>
               </div>
             ) : status === 'signing-in' ? (
-              <Button size="lg" loading loadingLabel="Approve the signature in your wallet…" />
+              <Button
+                size="lg"
+                loading
+                loadingLabel={session.usernamePrompt ? 'Choose your username…' : 'Approve the signature in your wallet…'}
+              />
             ) : needsSignature ? (
               <div className={styles.actionRow}>
                 <Button size="lg" className={styles.cta} icon={<WalletIcon size={18} />} onClick={startConnect}>
@@ -189,6 +195,9 @@ export function LandingScreen() {
               </li>
               <li>
                 <StatusIndicator tone={walletStep}>Connect wallet</StatusIndicator>
+              </li>
+              <li>
+                <StatusIndicator tone={nameStep}>Choose username</StatusIndicator>
               </li>
               <li>
                 <StatusIndicator tone={signStep}>Sign message</StatusIndicator>
@@ -252,6 +261,7 @@ export function LandingScreen() {
           else setWalletOpen(true);
         }}
       />
+      <UsernameDialog open={session.usernamePrompt} onSubmit={session.submitUsername} onCancel={session.cancelUsername} />
       <WalletDialog open={walletOpen} onClose={() => setWalletOpen(false)} onSelected={session.requestSignIn} />
     </div>
   );

@@ -22,6 +22,10 @@ interface SessionValue {
   /** Call after the user picks a wallet; signing starts as soon as it connects. */
   requestSignIn: () => void;
   signIn: () => Promise<void>;
+  /** True while sign-in is waiting for a new wallet to pick a username. */
+  usernamePrompt: boolean;
+  submitUsername: (username: string) => void;
+  cancelUsername: () => void;
   signOut: () => Promise<void>;
   setProfile: (profile: Profile) => void;
   clearError: () => void;
@@ -49,6 +53,8 @@ function writeStorage(storage: 'local' | 'session', key: string, value: string |
   }
 }
 
+class UsernameCancelled extends Error {}
+
 const friendlyWalletError = (err: unknown) => {
   const name = (err as { name?: string })?.name ?? '';
   const message = (err as { message?: string })?.message ?? '';
@@ -70,6 +76,8 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
   // Mirrors ageConfirmed so a sign-in started in the same tick as confirmation sees it.
   const ageRef = useRef(false);
   const pendingSignIn = useRef(false);
+  const [usernamePrompt, setUsernamePrompt] = useState(false);
+  const usernameResolver = useRef<{ resolve: (name: string) => void; reject: (err: Error) => void } | null>(null);
 
   // Restore a persisted session once on mount.
   useEffect(() => {
@@ -114,6 +122,27 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     setStatus('signed-out');
   }, []);
 
+  const askUsername = useCallback(
+    () =>
+      new Promise<string>((resolve, reject) => {
+        usernameResolver.current = { resolve, reject };
+        setUsernamePrompt(true);
+      }),
+    [],
+  );
+
+  const submitUsername = useCallback((name: string) => {
+    usernameResolver.current?.resolve(name);
+    usernameResolver.current = null;
+    setUsernamePrompt(false);
+  }, []);
+
+  const cancelUsername = useCallback(() => {
+    usernameResolver.current?.reject(new UsernameCancelled());
+    usernameResolver.current = null;
+    setUsernamePrompt(false);
+  }, []);
+
   const signOut = useCallback(async () => {
     pendingSignIn.current = false;
     clearSession();
@@ -132,22 +161,25 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
     try {
       const walletAddress = publicKey.toBase58();
       const challenge = await api.requestNonce(walletAddress);
+      // New wallets pick a username before being asked to sign.
+      const username = challenge.usernameRequired ? await askUsername() : undefined;
       const signature = await signMessage(new TextEncoder().encode(challenge.message));
       const result = await api.verify({
         walletAddress,
         nonce: challenge.nonce,
         signature: bs58.encode(signature),
         ageConfirmed: ageRef.current,
+        ...(username && { username }),
       });
       writeStorage('local', TOKEN_KEY, result.token);
       setToken(result.token);
       setProfileState(result.profile);
       setStatus('signed-in');
     } catch (err) {
-      setError(friendlyWalletError(err));
+      if (!(err instanceof UsernameCancelled)) setError(friendlyWalletError(err));
       setStatus('signed-out');
     }
-  }, [wallet]);
+  }, [wallet, askUsername]);
 
   const requestSignIn = useCallback(() => {
     pendingSignIn.current = true;
@@ -185,11 +217,27 @@ export function SessionProvider({ children }: { children: React.ReactNode }) {
       confirmAge,
       requestSignIn,
       signIn,
+      usernamePrompt,
+      submitUsername,
+      cancelUsername,
       signOut,
       setProfile: setProfileState,
       clearError: () => setError(null),
     }),
-    [status, profile, token, error, ageConfirmed, confirmAge, requestSignIn, signIn, signOut],
+    [
+      status,
+      profile,
+      token,
+      error,
+      ageConfirmed,
+      confirmAge,
+      requestSignIn,
+      signIn,
+      usernamePrompt,
+      submitUsername,
+      cancelUsername,
+      signOut,
+    ],
   );
 
   return <SessionContext.Provider value={value}>{children}</SessionContext.Provider>;

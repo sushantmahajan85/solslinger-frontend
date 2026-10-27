@@ -37,6 +37,7 @@ export interface Character {
 
 export interface Profile {
   walletAddress: string;
+  username: string | null;
   ageConfirmedAt: string | null;
   onboardingCompletedAt: string | null;
   factionLockedAt: string | null;
