@@ -24,6 +24,26 @@ const NEXT_STEP_LABEL: Record<NextStep, string> = {
   lobby: 'Enter the Bloody Raven',
 };
 
+// Drifting embers: fixed values (not random) so server and client render identically.
+// [left %, size px, rise seconds, delay seconds, sideways drift px]
+const EMBERS: [number, number, number, number, number][] = [
+  [6, 3, 15, 0, 40],
+  [13, 2, 19, -6, -30],
+  [21, 4, 17, -11, 55],
+  [29, 2, 22, -3, -45],
+  [37, 3, 16, -9, 35],
+  [46, 2, 21, -14, -25],
+  [54, 4, 18, -5, 50],
+  [62, 2, 23, -17, -40],
+  [69, 3, 15, -8, 30],
+  [76, 4, 20, -2, -55],
+  [83, 2, 17, -12, 45],
+  [90, 3, 22, -7, -35],
+  [96, 2, 19, -15, 25],
+];
+
+const TICKER = ['Outlaws', 'The Vance Line', 'Gamblers', 'The Bloody Raven', 'Nerve & Capital'];
+
 export function LandingScreen() {
   const router = useRouter();
   const wallet = useWallet();
@@ -52,18 +72,54 @@ export function LandingScreen() {
   return (
     <div ref={screenRef} className={styles.screen}>
       <div className={styles.backdrop} aria-hidden="true" />
+      <div className={styles.embers} aria-hidden="true">
+        {EMBERS.map(([left, size, rise, delay, drift], i) => (
+          <span
+            key={i}
+            style={
+              {
+                left: `${left}%`,
+                width: size,
+                height: size,
+                animationDuration: `${rise}s`,
+                animationDelay: `${delay}s`,
+                '--drift': `${drift}px`,
+              } as React.CSSProperties
+            }
+          />
+        ))}
+      </div>
+      <div className={styles.frame} aria-hidden="true" />
+      <div className={styles.grain} aria-hidden="true" />
 
       <header className={styles.header}>
         <BrandMark />
-        {status === 'signed-in' ? <WalletChip /> : null}
+        {status === 'signed-in' ? (
+          <WalletChip />
+        ) : (
+          <span className={styles.secure}>
+            <span className={styles.securePip} aria-hidden="true" />
+            Non-custodial sign-in
+          </span>
+        )}
       </header>
 
       <main className={styles.main}>
         <section className={styles.copy} aria-labelledby="landing-title">
           <p className={styles.eyebrow}>A frontier of nerve and capital</p>
           <h1 id="landing-title" className={styles.title}>
-            <span className={styles.titleLine}>Draw your wallet.</span>
-            <span className={styles.titleAccent}>Claim your legend.</span>
+            <span className={styles.titleLine} style={{ '--i': 0 } as React.CSSProperties}>
+              Draw your
+            </span>
+            <span className={styles.titleLine} style={{ '--i': 1 } as React.CSSProperties}>
+              wallet.
+            </span>
+            <span className={`${styles.titleLine} ${styles.titleAccent}`} style={{ '--i': 2 } as React.CSSProperties}>
+              Claim your
+            </span>
+            <span className={`${styles.titleLine} ${styles.titleAccent}`} style={{ '--i': 3 } as React.CSSProperties}>
+              legend.
+            </span>
           </h1>
           <p className={styles.lede}>
             Step off the Vance Line into a territory run by outlaws, auditors and high-stakes gamblers. Swear allegiance,
@@ -80,6 +136,7 @@ export function LandingScreen() {
                 </p>
                 <Button
                   size="lg"
+                  className={styles.cta}
                   icon={<ArrowRightIcon size={18} />}
                   iconPosition="end"
                   onClick={() => router.push(routeFor(profile.nextStep))}
@@ -91,7 +148,7 @@ export function LandingScreen() {
               <Button size="lg" loading loadingLabel="Approve the signature in your wallet…" />
             ) : needsSignature ? (
               <div className={styles.actionRow}>
-                <Button size="lg" icon={<WalletIcon size={18} />} onClick={startConnect}>
+                <Button size="lg" className={styles.cta} icon={<WalletIcon size={18} />} onClick={startConnect}>
                   Sign in with {wallet.wallet?.adapter.name ?? 'wallet'}
                 </Button>
                 <Button
@@ -107,6 +164,7 @@ export function LandingScreen() {
             ) : (
               <Button
                 size="lg"
+                className={styles.cta}
                 icon={<WalletIcon size={18} />}
                 loading={walletBusy}
                 loadingLabel="Connecting wallet…"
@@ -140,6 +198,7 @@ export function LandingScreen() {
         </section>
 
         <div className={styles.art}>
+          <span className={styles.rays} aria-hidden="true" />
           <span className={styles.floorShadow} aria-hidden="true" />
           <div className={styles.float}>
             <div className={styles.tilt}>
@@ -160,6 +219,20 @@ export function LandingScreen() {
           </div>
         </div>
       </main>
+
+      <div className={styles.ticker} aria-hidden="true">
+        <div className={styles.tickerTrack}>
+          {[0, 1].map((copy) => (
+            <div key={copy} className={styles.tickerGroup}>
+              {[...TICKER, ...TICKER].map((word, i) => (
+                <span key={i} className={styles.tickerItem}>
+                  {word}
+                </span>
+              ))}
+            </div>
+          ))}
+        </div>
+      </div>
 
       <footer className={styles.footer}>
         <span>{MINIMUM_AGE}+ only</span>

@@ -23,6 +23,12 @@ const LANTERNS: [number, number][] = [
   [85.7, 20.5],
 ];
 
+// Slot cabinets in the left corridor; the sprite height is its intrinsic pixel height.
+const CABINETS = [
+  { src: '/scene/slot-dead-ringers.webp', height: 868, className: styles.slotBack },
+  { src: '/scene/slot-solslinger.webp', height: 879, className: styles.slotFront },
+];
+
 export function LobbyScreen() {
   const allowed = useJourneyGuard('lobby');
   const { profile } = useSession();
@@ -74,14 +80,26 @@ export function LobbyScreen() {
             ))}
           </div>
 
-          <div className={styles.slotSprites} data-active={active === 'slots' || undefined} aria-hidden="true">
-            <div className={`${styles.cabinet} ${styles.slotBack}`}>
-              <img src="/scene/slot-dead-ringers.webp" alt="" width={560} height={868} />
-            </div>
-            <div className={`${styles.cabinet} ${styles.slotFront}`}>
-              <img src="/scene/slot-solslinger.webp" alt="" width={560} height={879} />
+          {/* The cabinets are fixed to the corridor; the well is cut at the counter so its lip covers their bases. */}
+          <div className={styles.slotGlow} aria-hidden="true" />
+          <div className={styles.slotWell} aria-hidden="true">
+            <div className={styles.slotSprites} data-active={active === 'slots' || undefined}>
+              {CABINETS.map((cabinet) => (
+                <div
+                  key={cabinet.src}
+                  className={`${styles.cabinet} ${cabinet.className}`}
+                  style={{ '--sprite': `url(${cabinet.src})` } as React.CSSProperties}
+                >
+                  <img src={cabinet.src} alt="" width={560} height={cabinet.height} />
+                </div>
+              ))}
             </div>
           </div>
+          {CABINETS.map((cabinet) => (
+            <div key={cabinet.src} className={`${styles.slotReflection} ${cabinet.className}`} aria-hidden="true">
+              <img src={cabinet.src} alt="" width={560} height={cabinet.height} />
+            </div>
+          ))}
 
           {/* Gwen stands behind the bar: the well is cut at the counter top, so the counter hides her legs. */}
           <div className={styles.hostessWell} aria-hidden="true">

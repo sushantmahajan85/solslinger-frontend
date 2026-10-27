@@ -14,14 +14,14 @@
   container-type: size;
 }
 
-/* Safety fill behind everything: the same room, heavily defocused and dimmed, so no screen shape
-   ever shows flat black (it is only visible where the stage and its wings don't reach). */
+/* Safety fill behind everything: the same room, dimmed, so no screen shape ever shows flat black
+   (it is only visible where the stage and its wings don't reach). */
 .viewport::before {
   content: '';
   position: absolute;
-  inset: -40px;
+  inset: 0;
   background: url('/scene/saloon.webp') center / cover no-repeat;
-  filter: blur(28px) brightness(0.5) saturate(0.9);
+  filter: brightness(0.5) saturate(0.9);
 }
 
 /* The 16:9 stage always matches the viewport height; on 16:10 and narrower screens it overflows
@@ -52,14 +52,13 @@
 
 .artBox {
   position: absolute;
-  inset: -12px;
+  inset: 0;
 }
 
-/* Exactly 4px of blur on the background layer only. */
+/* The room artwork, crisp. */
 .background {
   position: absolute;
   inset: 0;
-  filter: blur(4px);
 }
 
 .background img {
@@ -69,9 +68,8 @@
 }
 
 /* Wider-than-16:9 screens: mirrored copies of the room continue past each side wall, so the
-   background fills the whole screen. A mirror is seamless at the join, and each copy overlaps the
-   art by the 12px blur overhang. Same 4px blur as the main layer; sprites and stations stay on the
-   original 16:9 artwork. */
+   background fills the whole screen. A mirror is seamless at the join; sprites and stations stay on
+   the original 16:9 artwork. */
 .wings {
   position: absolute;
   inset: 0;
@@ -84,16 +82,15 @@
   width: 100%;
   height: 100%;
   object-fit: fill;
-  filter: blur(4px);
   transform: scaleX(-1);
 }
 
 .wingLeft {
-  left: calc(-100% + 24px);
+  left: -100%;
 }
 
 .wingRight {
-  left: calc(100% - 24px);
+  left: 100%;
 }
 
 @container (aspect-ratio > 1.78) {
@@ -131,36 +128,103 @@
   animation: lantern-flicker 4.3s steps(1, end) infinite, lantern-breathe 3.1s var(--ease-in-out) infinite;
 }
 
-/* ---- Sharp foreground sprites, moved as 3D layers by --px/--py (usePointerParallax) ----
-   The blurred background stays put, so the sprites separate from it in depth. */
+/* ---- Foreground sprites ----
+   The hostess drifts with the pointer (--px/--py from usePointerParallax). The slot cabinets are
+   part of the corridor's architecture and stay fixed to the artwork, so they never float. */
 .artBox {
   perspective: 1600px;
+}
+
+/* Static well, like the hostess's: the bar's left wing is cut over the cabinets' bases, so they
+   read as standing in the corridor behind it rather than resting on top of it. */
+.slotWell {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mask-image: linear-gradient(180deg, #000 calc(60.2% - 6px), transparent calc(60.2% + 2px));
+  -webkit-mask-image: linear-gradient(180deg, #000 calc(60.2% - 6px), transparent calc(60.2% + 2px));
+}
+
+/* Light the cabinets throw into the corridor (blue from the ghost machine, gold from the other),
+   so they read as glowing objects in the room rather than pasted-on art. */
+.slotGlow {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse 12% 22% at 12.5% 44%, rgba(60, 140, 255, 0.3), transparent 70%),
+    radial-gradient(ellipse 13% 24% at 21.5% 44%, rgba(255, 170, 60, 0.32), transparent 70%);
+  transition: opacity var(--dur-base) var(--ease-out);
+}
+
+/* The lacquered counter mirrors each cabinet's base just in front of it. */
+.slotReflection {
+  position: absolute;
+  top: 61.2%;
+  pointer-events: none;
+  opacity: 0.6;
+  filter: blur(1.4px) brightness(1.25) saturate(1.1);
+  mask-image: linear-gradient(180deg, #000, transparent 13%);
+  -webkit-mask-image: linear-gradient(180deg, #000, transparent 13%);
+}
+
+.slotReflection img {
+  display: block;
+  height: 100%;
+  width: auto;
+  transform: scaleY(-1);
 }
 
 .slotSprites {
   position: absolute;
   inset: 0;
-  pointer-events: none;
-  perspective: 1200px;
-  transform: translate3d(calc(var(--px, 0) * -12px), calc(var(--py, 0) * -5px), 0);
 }
 
-/* The cabinets stand in the left corridor behind the bar's left wing: their bases sit on the
-   counter's back edge (60.5% of the artwork's height), so their scale matches that depth. */
+/* The cabinets stand in the left corridor behind the bar's left wing: their bases sit just behind
+   the counter's back edge (~60.5% of the artwork's height), so their scale matches that depth. */
 .cabinet {
   position: absolute;
-  bottom: 39.5%;
-  transform-origin: 50% 100%;
-  transform: rotateY(calc(var(--px, 0) * 10deg)) rotateX(calc(var(--py, 0) * -3deg));
+  bottom: 38.8%;
   animation: cabinet-flicker 3.8s linear infinite;
 }
 
+/* Contact shadow and a faint warm bounce on the floorboards under each cabinet. */
+.cabinet::before {
+  content: '';
+  position: absolute;
+  left: -14%;
+  right: -14%;
+  bottom: 1%;
+  height: 9%;
+  background:
+    radial-gradient(ellipse at center, rgba(0, 0, 0, 0.78) 0%, rgba(0, 0, 0, 0.35) 45%, transparent 72%),
+    radial-gradient(ellipse at center, rgba(255, 150, 60, 0.14), transparent 70%);
+  filter: blur(5px);
+}
+
+/* Bright and crisp, lightly warmed to sit in the saloon's amber light. */
 .cabinet img {
+  position: relative;
   display: block;
   height: 100%;
   width: auto;
   transition: filter var(--dur-base) var(--ease-out);
-  filter: drop-shadow(0 10px 14px rgba(0, 0, 0, 0.6));
+  filter: brightness(0.98) saturate(1.06) contrast(1.1) sepia(0.06);
+}
+
+/* Lantern light raking down from above-left, falling into shadow towards the base. Painted only
+   where the cabinet is (the sprite doubles as the mask), so it never spills past the silhouette. */
+.cabinet::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  -webkit-mask: var(--sprite) center / 100% 100% no-repeat;
+  mask: var(--sprite) center / 100% 100% no-repeat;
+  background:
+    radial-gradient(ellipse 90% 55% at 25% 0%, rgba(255, 190, 110, 0.34), transparent 70%),
+    linear-gradient(180deg, transparent 60%, rgba(8, 4, 2, 0.32));
+  mix-blend-mode: soft-light;
 }
 
 /* Kept clear of the ~5% side crop that 16:10 screens apply to the 16:9 stage. */
@@ -176,8 +240,8 @@
 }
 
 .slotSprites[data-active] img {
-  filter: drop-shadow(0 0 2px var(--faction-glow)) drop-shadow(0 0 16px color-mix(in srgb, var(--faction-glow) 70%, transparent))
-    drop-shadow(0 10px 14px rgba(0, 0, 0, 0.6));
+  filter: brightness(1.08) saturate(1.12) contrast(1.1) drop-shadow(0 0 2px var(--faction-glow))
+    drop-shadow(0 0 14px color-mix(in srgb, var(--faction-glow) 55%, transparent));
 }
 
 /* The bar counter's top edge sits at 62.5% of the artwork's height. Everything below it is masked

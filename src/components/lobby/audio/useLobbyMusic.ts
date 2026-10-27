@@ -4,7 +4,8 @@ import { useCallback, useEffect, useRef, useState } from 'react';
 import { createFileMusic, createSaloonMusic, type MusicEngine } from './saloonMusic';
 
 const MUTE_KEY = 'solslinger.music-muted';
-const MUSIC_URL = process.env.NEXT_PUBLIC_LOBBY_MUSIC_URL;
+// The bundled soundtrack; NEXT_PUBLIC_LOBBY_MUSIC_URL overrides it.
+const MUSIC_URL = process.env.NEXT_PUBLIC_LOBBY_MUSIC_URL || '/music/cowboy-countryside-music.mp3';
 
 /** idle: not started · waiting: browser needs a first click/tap · playing · muted */
 export type MusicStatus = 'idle' | 'waiting' | 'playing' | 'muted';

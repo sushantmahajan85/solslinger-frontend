@@ -26,7 +26,7 @@ export const LOBBY_NODES: LobbyNodeConfig[] = [
     region: { left: 5.8, top: 29, width: 22.5, height: 33 },
     plaque: { x: 17, y: 23.5 },
     style: 'stem',
-    depth: 12,
+    depth: 0,
   },
   {
     id: 'social',
