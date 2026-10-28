@@ -2,7 +2,7 @@
 
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
-import { useEffect, useEffectEvent, useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import { BrandMark } from '@/components/brand/BrandMark';
 import { Button } from '@/components/ui/Button';
 import { AlertIcon, ArrowRightIcon, SkipIcon } from '@/components/ui/Icons';
@@ -15,8 +15,6 @@ import type { TrainSceneHandle } from './trainScene';
 import styles from './Onboarding.module.css';
 
 const ARRIVAL_SECONDS = 7;
-// Without the animated crossing (reduced motion or no WebGL), hold the still frame briefly before moving on.
-const STILL_HOLD_MS = 1800;
 
 export function OnboardingScreen() {
   // Travellers who already arrived may ride in again (Back from Allegiance); nothing is re-saved.
@@ -29,8 +27,11 @@ export function OnboardingScreen() {
   const [sceneState, setSceneState] = useState<'loading' | 'ready' | 'fallback'>('loading');
   const [progress, setProgress] = useState(0);
   const [leaving, setLeaving] = useState(false);
+  const [fading, setFading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const screenRef = useRef<HTMLDivElement>(null);
+  const continueRef = useRef<HTMLButtonElement>(null);
+  const sceneRef = useRef<TrainSceneHandle | null>(null);
   usePointerParallax(screenRef, allowed);
 
   // The PixiJS scene (and the train texture) only load for visitors who still need the arrival.
@@ -59,6 +60,7 @@ export function OnboardingScreen() {
         if (cancelled) created.destroy();
         else {
           handle = created;
+          sceneRef.current = created;
           setSceneState('ready');
         }
       })
@@ -72,40 +74,48 @@ export function OnboardingScreen() {
 
     return () => {
       cancelled = true;
+      sceneRef.current = null;
       handle?.destroy();
     };
   }, [allowed, reducedMotion]);
 
   const arrived = progress >= 100;
 
-  const finish = async () => {
+  // Jumping off sends the train on out of the station first; skipping just fades away mid-ride.
+  // The arrival is saved while the train pulls out, so the next screen is ready when it has gone.
+  const finish = async ({ depart = false } = {}) => {
     if (!token || !profile || leaving) return;
     setLeaving(true);
     setError(null);
+    const saving = replay ? null : api.completeOnboarding(token).then((r) => r.profile);
+    // Settled up front so a failure during the departure is never reported as unhandled.
+    const saved = saving?.then(
+      (value) => ({ ok: true as const, value }),
+      (err: unknown) => ({ ok: false as const, err }),
+    );
+    if (depart) await sceneRef.current?.depart();
+    setFading(true);
     const fadeOut = new Promise((resolve) => setTimeout(resolve, reducedMotion ? 0 : 520));
-    if (replay) {
+    if (!saved) {
       await fadeOut;
       router.replace(routeFor(profile.nextStep));
       return;
     }
-    try {
-      const [{ profile: updated }] = await Promise.all([api.completeOnboarding(token), fadeOut]);
-      setProfile(updated);
-      router.replace(routeFor(updated.nextStep));
-    } catch (err) {
+    const [result] = await Promise.all([saved, fadeOut]);
+    if (result.ok) {
+      setProfile(result.value);
+      router.replace(routeFor(result.value.nextStep));
+    } else {
       setLeaving(false);
-      setError(err instanceof Error ? err.message : 'Could not save your arrival. Try again.');
+      setFading(false);
+      setError(result.err instanceof Error ? result.err.message : 'Could not save your arrival. Try again.');
     }
   };
 
-  // Once the train has steamed off the right edge, move on by itself.
-  const finishOnArrival = useEffectEvent(() => void finish());
-  const animated = sceneState === 'ready' && !reducedMotion;
+  // The traveller steps off themselves; hand them the button as soon as the train has stopped.
   useEffect(() => {
-    if (!arrived) return;
-    const timer = setTimeout(finishOnArrival, animated ? 0 : STILL_HOLD_MS);
-    return () => clearTimeout(timer);
-  }, [arrived, animated]);
+    if (arrived) continueRef.current?.focus({ preventScroll: true });
+  }, [arrived]);
 
   if (!allowed) {
     return (
@@ -116,7 +126,7 @@ export function OnboardingScreen() {
   }
 
   return (
-    <div ref={screenRef} className={`${styles.screen} ${leaving ? styles.leaving : ''}`}>
+    <div ref={screenRef} className={`${styles.screen} ${fading ? styles.leaving : ''}`}>
       <div ref={hostRef} className={styles.canvasHost} />
 
       {sceneState === 'fallback' ? (
@@ -129,7 +139,7 @@ export function OnboardingScreen() {
       <header className={styles.topBar}>
         <BrandMark href={null} />
         {!arrived ? (
-          <Button variant="ghost" icon={<SkipIcon size={16} />} onClick={finish} disabled={leaving}>
+          <Button variant="ghost" icon={<SkipIcon size={16} />} onClick={() => void finish()} disabled={leaving}>
             Skip arrival
           </Button>
         ) : null}
@@ -166,23 +176,23 @@ export function OnboardingScreen() {
             <span className={styles.fill} style={{ transform: `scaleX(${progress / 100})` }} />
           </div>
         </div>
+        <Button
+          ref={continueRef}
+          size="lg"
+          disabled={!arrived}
+          loading={leaving}
+          loadingLabel="Jumping off…"
+          icon={<ArrowRightIcon size={18} />}
+          iconPosition="end"
+          onClick={() => void finish({ depart: true })}
+        >
+          Jump off at Solslinger
+        </Button>
         {error ? (
-          <>
-            <p className={styles.error} role="alert">
-              <AlertIcon size={16} />
-              {error}
-            </p>
-            <Button
-              size="lg"
-              loading={leaving}
-              loadingLabel="Jumping off…"
-              icon={<ArrowRightIcon size={18} />}
-              iconPosition="end"
-              onClick={finish}
-            >
-              Try again
-            </Button>
-          </>
+          <p className={styles.error} role="alert">
+            <AlertIcon size={16} />
+            {error}
+          </p>
         ) : null}
       </div>
     </div>

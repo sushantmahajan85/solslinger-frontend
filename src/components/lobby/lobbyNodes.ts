@@ -41,11 +41,11 @@ export const LOBBY_NODES: LobbyNodeConfig[] = [
   {
     id: 'blackjack',
     label: 'Blackjack Lounge',
-    area: 'High-stakes tables',
+    area: 'Right corridor',
     comingSoon: 'The dealers are still shuffling. The blackjack lounge opens soon.',
-    region: { left: 77, top: 42, width: 18, height: 23 },
-    plaque: { x: 86, y: 35 },
+    region: { left: 74, top: 48.9, width: 22, height: 15.1 },
+    plaque: { x: 85, y: 44 },
     style: 'stem',
-    depth: 6,
+    depth: 0,
   },
 ];

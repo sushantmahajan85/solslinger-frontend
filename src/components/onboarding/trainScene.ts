@@ -25,16 +25,25 @@ const TRACK_C = 264;
 
 const CRUISE_SPEED = 600; // design px / second the scenery pans at
 
+// Arrival curve: full steam on entry, braking to a dead stop exactly at progress 1.
+const easeOutCubic = (t: number) => 1 - (1 - t) ** 3;
+// Normalised speed of that curve (1 at entry, 0 at the stop); drives scenery, chatter and effects.
+const speedFactor = (t: number) => (1 - t) ** 2;
+
 export interface TrainSceneOptions {
   reducedMotion: boolean;
-  /** Seconds the train takes to cross from off-screen left to off-screen right (progress 0 → 100%). */
+  /** Seconds the train takes to roll in from off-screen left and stop in frame (progress 0 → 100%). */
   arrivalSeconds: number;
   onProgress?: (progress: number) => void;
 }
 
 export interface TrainSceneHandle {
+  /** Pulls the train out of the station and off the right edge; resolves once it has left the frame. */
+  depart: () => Promise<void>;
   destroy: () => void;
 }
+
+const DEPART_SECONDS = 2.4;
 
 function canvasTexture(width: number, height: number, paint: (ctx: CanvasRenderingContext2D) => void) {
   const canvas = document.createElement('canvas');
@@ -286,9 +295,15 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
   trackLayer.addChild(trainLayer);
   camera.addChild(trackLayer);
 
-  // Enters with the cowcatcher just off-screen left, ends with the tender just off-screen right.
+  // Enters with the cowcatcher just off-screen left and stops centred in frame, at the pose the
+  // static track is drawn for, so its wheels come to rest exactly on the rail.
   const startX = -TRAIN_SCALE * BODY.nose - 120;
-  const endX = DESIGN_W + 120 - TRAIN_SCALE * BODY.tail;
+  const endX = DESIGN_W / 2 - (TRAIN_SCALE * DESIGN_W) / 2;
+  // On departure it pulls away until the tender is just off-screen right.
+  const exitX = DESIGN_W + 120 - TRAIN_SCALE * BODY.tail;
+  let departure: { from: number; startedAt: number; done: () => void } | null = null;
+  let departed: Promise<void> | null = null;
+  let trainX = startX;
 
   // Sparks and track dust fly in front of the wheels.
   const fxLayer = new Container();
@@ -373,9 +388,21 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
     const dt = Math.min(app.ticker.deltaMS / 1000, 0.05);
     const elapsed = (performance.now() - startedAt) / 1000;
     const progress = options.reducedMotion ? 1 : Math.min(1, elapsed / options.arrivalSeconds);
-    // Reduced motion shows a single still with the train mid-crossing.
-    const travel = options.reducedMotion ? 0.5 : progress;
-    const speed = CRUISE_SPEED;
+    // Arrival brakes into the station; departure is its mirror, pulling away from rest and gathering speed.
+    // Reduced motion shows a single still with the train already at rest.
+    let tx: number;
+    let motion: number;
+    if (departure) {
+      const d = Math.min(1, (performance.now() - departure.startedAt) / 1000 / DEPART_SECONDS);
+      tx = lerp(departure.from, exitX, d ** 3);
+      motion = d ** 2;
+      if (d >= 1) departure.done();
+    } else {
+      tx = lerp(startX, endX, easeOutCubic(progress));
+      motion = options.reducedMotion ? 0 : speedFactor(progress);
+    }
+    trainX = tx;
+    const speed = CRUISE_SPEED * motion;
 
     pointer.x += (pointer.tx - pointer.x) * 0.06;
     pointer.y += (pointer.ty - pointer.y) * 0.06;
@@ -392,39 +419,44 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
     for (const streak of streaks) {
       streak.sprite.x -= speed * streak.rate * dt;
       if (streak.sprite.x < -720) streak.sprite.x = DESIGN_W + 200 + Math.random() * 400;
-      streak.sprite.alpha = streak.alpha;
+      streak.sprite.alpha = streak.alpha * motion;
     }
 
-    // The train crosses the frame along the track; chatter and rocking ride on top of that path.
-    const chatter = Math.sin(elapsed * 31) * 1.6 + Math.sin(elapsed * 53) * 0.9 + (Math.random() - 0.5) * 1.4;
-    const tx = lerp(startX, endX, travel);
+    // The train rolls in along the track; chatter and rocking ride on that path and settle as it brakes.
+    // Layered sines rather than per-frame noise, so the motion stays smooth at any frame rate.
+    const chatter = (Math.sin(elapsed * 31) * 1.6 + Math.sin(elapsed * 53) * 0.9 + Math.sin(elapsed * 17.7) * 0.6) * motion;
     trackLayer.position.set(pointer.x * 18, pointer.y * 10);
-    trainLayer.x = tx + Math.sin(elapsed * 7.3) * 1.5;
+    trainLayer.x = tx + Math.sin(elapsed * 7.3) * 1.5 * motion;
     trainLayer.y = TRACK_C + RAIL_SLOPE * tx + chatter;
-    trainLayer.rotation = Math.sin(elapsed * 4.1) * 0.0022 + Math.sin(elapsed * 11) * 0.0012;
+    trainLayer.rotation = (Math.sin(elapsed * 4.1) * 0.0022 + Math.sin(elapsed * 11) * 0.0012) * motion;
 
-    headlamp.alpha = 0.8 + Math.sin(elapsed * 13) * 0.08 + (Math.random() - 0.5) * 0.12;
+    headlamp.alpha = 0.82 + Math.sin(elapsed * 13) * 0.06 + Math.sin(elapsed * 29) * 0.04;
     beam.alpha = 0.55 + Math.sin(elapsed * 9) * 0.08;
 
-    // Camera shake from the running train.
-    camera.position.set((Math.random() - 0.5) * 2.4, (Math.random() - 0.5) * 2);
+    // Camera shake from the running train, fading out as it comes to rest.
+    camera.position.set(
+      (Math.sin(elapsed * 37) + Math.sin(elapsed * 61)) * 0.6 * motion,
+      (Math.sin(elapsed * 43) + Math.sin(elapsed * 71)) * 0.5 * motion,
+    );
 
     for (const mote of motes) {
-      mote.sprite.x -= speed * mote.drift * dt;
+      // A light breeze keeps the dust drifting once the train is still.
+      mote.sprite.x -= (speed + 14) * mote.drift * dt;
       if (mote.sprite.x < -20) mote.sprite.x = DESIGN_W + 20;
       mote.sprite.y += Math.sin(elapsed * 1.6 + mote.phase) * 10 * dt;
     }
 
     if (!options.reducedMotion) {
       const stack = toScene(STACK);
-      smokeClock += dt * 22;
+      // At rest the stack idles: fewer, paler puffs rising almost straight up.
+      smokeClock += dt * (7 + 15 * motion);
       while (smokeClock >= 1) {
         smokeClock -= 1;
-        const dark = Math.random() < 0.45;
+        const dark = Math.random() < 0.15 + 0.3 * motion;
         spawn(smokeLayer, dark ? smokeTexture : steamTexture, { x: stack.x + Math.random() * 8, y: stack.y }, {
           life: 1.6 + Math.random() * 1.2,
-          vx: -60 - speed * 0.25 - Math.random() * 120,
-          vy: -150 - Math.random() * 90,
+          vx: -12 - (48 + Math.random() * 120) * motion - speed * 0.25,
+          vy: -110 - (40 + Math.random() * 90) * motion,
           gravity: 70,
           grow: 1.6 + Math.random() * 1.2,
           baseScale: 0.22,
@@ -432,7 +464,7 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
         });
       }
 
-      sparkClock += dt * 26;
+      sparkClock += dt * 26 * motion;
       while (sparkClock >= 1) {
         sparkClock -= 1;
         const contact = toScene(WHEEL_CONTACTS[Math.floor(Math.random() * WHEEL_CONTACTS.length)]);
@@ -447,7 +479,7 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
         });
       }
 
-      dustClock += dt * 14;
+      dustClock += dt * 14 * motion;
       while (dustClock >= 1) {
         dustClock -= 1;
         const contact = toScene(WHEEL_CONTACTS[Math.floor(Math.random() * WHEEL_CONTACTS.length)]);
@@ -494,9 +526,18 @@ export async function createTrainScene(host: HTMLElement, options: TrainSceneOpt
 
   let destroyed = false;
   return {
+    depart() {
+      // A still frame has no motion to play; the caller moves straight on.
+      if (destroyed || options.reducedMotion) return Promise.resolve();
+      departed ??= new Promise<void>((resolve) => {
+        departure = { from: trainX, startedAt: performance.now(), done: resolve };
+      });
+      return departed;
+    },
     destroy() {
       if (destroyed) return;
       destroyed = true;
+      departure?.done();
       window.removeEventListener('pointermove', onPointer);
       app.renderer.off('resize', layout);
       app.ticker.remove(tick);

@@ -239,6 +239,93 @@
   height: 28%;
 }
 
+.tableWell {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+}
+
+/* Two-layer contact shadow under the rim (stage y ~64%): a soft pool from the table's bulk,
+   then a tight dark band where the underside actually meets the lacquer. */
+.tableWell::before,
+.tableWell::after {
+  content: '';
+  position: absolute;
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+.tableWell::before {
+  left: 74.6%;
+  top: 61.2%;
+  width: 20.8%;
+  height: 4%;
+  background: radial-gradient(ellipse at center, rgba(8, 3, 1, 0.75), rgba(8, 3, 1, 0.35) 50%, transparent 72%);
+  filter: blur(4px);
+}
+
+.tableWell::after {
+  left: 77%;
+  top: 65.1%;
+  width: 16%;
+  height: 1.4%;
+  background: radial-gradient(ellipse at center, rgba(0, 0, 0, 0.95), rgba(0, 0, 0, 0.5) 55%, transparent 75%);
+  filter: blur(1.5px);
+}
+
+/* The art is drawn from a steeper angle than the bar, so the 2:1 sprite is flattened to 2.6:1 to match
+   the counter's grazing view. The rim's underside (97.3% down) rests on the counter's front edge (~64%). */
+.cardTable,
+.tableReflection {
+  position: absolute;
+  left: 73.5%;
+  top: 50.7%;
+  width: 23%;
+  aspect-ratio: 2.6 / 1;
+}
+
+.cardTable img,
+.tableReflection img {
+  display: block;
+  width: 100%;
+  height: 100%;
+}
+
+.cardTable img {
+  /* Same lantern grade as the cabinets, so the gold reads as the room's light rather than studio light. */
+  filter: sepia(0.2) saturate(0.88) brightness(0.86) contrast(1.05);
+  transition: filter var(--dur-base) var(--ease-out);
+}
+
+/* Occlusion: the rim's underside darkens toward the counter. Painted only on the sprite's own pixels. */
+.cardTable::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  -webkit-mask: url('/scene/round-table.png') center / 100% 100% no-repeat;
+  mask: url('/scene/round-table.png') center / 100% 100% no-repeat;
+  background:
+    linear-gradient(180deg, transparent 78%, rgba(20, 8, 2, 0.3) 88%, rgba(12, 4, 1, 0.65) 97%),
+    radial-gradient(ellipse 60% 40% at 30% 10%, rgba(255, 190, 110, 0.18), transparent 70%);
+  mix-blend-mode: multiply;
+  pointer-events: none;
+}
+
+/* The glossy counter mirrors the rim just in front of it, fading out within a few px like the slots' reflections. */
+.tableReflection {
+  transform-origin: 50% 97.3%;
+  transform: scaleY(-0.35);
+  opacity: 0.4;
+  filter: blur(1.2px) sepia(0.3) saturate(1.1) brightness(0.85);
+  -webkit-mask-image: linear-gradient(180deg, transparent 82%, rgba(0, 0, 0, 0.3) 90%, #000 96.8%, transparent 97.3%);
+  mask-image: linear-gradient(180deg, transparent 82%, rgba(0, 0, 0, 0.3) 90%, #000 96.8%, transparent 97.3%);
+}
+
+.tableWell[data-active] .cardTable img {
+  filter: sepia(0.1) saturate(1.02) brightness(1.05)
+    drop-shadow(0 0 2px var(--faction-glow)) drop-shadow(0 0 14px color-mix(in srgb, var(--faction-glow) 55%, transparent));
+}
+
 .slotSprites[data-active] img {
   filter: brightness(1.08) saturate(1.12) contrast(1.1) drop-shadow(0 0 2px var(--faction-glow))
     drop-shadow(0 0 14px color-mix(in srgb, var(--faction-glow) 55%, transparent));
@@ -314,7 +401,7 @@
   box-shadow: none;
 }
 
-/* Region outline: only the blackjack lounge needs it, the other stations glow through their sprites. */
+/* Region outline: each station glows through its sprite, with a soft pool on the floor. */
 .regionGlow {
   position: absolute;
   inset: 0;
@@ -323,16 +410,9 @@
   transition: opacity var(--dur-base) var(--ease-out);
 }
 
-.nodeBlackjack .regionGlow {
-  border: 1px solid color-mix(in srgb, var(--faction-glow) 75%, transparent);
-  background: radial-gradient(ellipse at center, color-mix(in srgb, var(--faction-glow) 16%, transparent), transparent 70%);
-  box-shadow:
-    0 0 24px color-mix(in srgb, var(--faction-glow) 35%, transparent),
-    inset 0 0 24px color-mix(in srgb, var(--faction-glow) 20%, transparent);
-}
-
 .nodeSlots .regionGlow,
-.nodeSocial .regionGlow {
+.nodeSocial .regionGlow,
+.nodeBlackjack .regionGlow {
   inset: auto 8% -1% 8%;
   height: 7%;
   border-radius: 50%;
@@ -348,10 +428,6 @@
 .node:not([data-active]) .regionGlow {
   animation: region-idle 3.4s var(--ease-in-out) infinite;
   animation-delay: var(--delay, 0s);
-}
-
-.nodeBlackjack:not([data-active]) .regionGlow {
-  animation-name: region-idle-soft;
 }
 
 /* Plaque: blackened iron, neon edge in the faction colour. */
@@ -575,16 +651,6 @@
   }
   50% {
     opacity: 0.6;
-  }
-}
-
-@keyframes region-idle-soft {
-  0%,
-  100% {
-    opacity: 0;
-  }
-  50% {
-    opacity: 0.28;
   }
 }
 

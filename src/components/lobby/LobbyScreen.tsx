@@ -101,6 +101,15 @@ export function LobbyScreen() {
             </div>
           ))}
 
+          <div className={styles.tableWell} data-active={active === 'blackjack' || undefined} aria-hidden="true">
+            <div className={styles.tableReflection}>
+              <img src="/scene/round-table.png" alt="" width={1774} height={887} />
+            </div>
+            <div className={styles.cardTable}>
+              <img src="/scene/round-table.png" alt="" width={1774} height={887} />
+            </div>
+          </div>
+
           {/* Gwen stands behind the bar: the well is cut at the counter top, so the counter hides her legs. */}
           <div className={styles.hostessWell} aria-hidden="true">
             <img
