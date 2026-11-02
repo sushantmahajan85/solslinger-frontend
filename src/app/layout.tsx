@@ -21,7 +21,8 @@ export const metadata: Metadata = {
     default: 'Solslinger Studio',
     template: '%s · Solslinger Studio',
   },
-  description: 'Swear allegiance, claim a legend, and walk into the Bloody Raven.',
+  description:
+    'Swear allegiance in The Bleeding Banks Territories, claim a legend, and walk into the Bloody Raven.',
 };
 
 export const viewport: Viewport = {

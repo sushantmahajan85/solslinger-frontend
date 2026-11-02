@@ -43,7 +43,14 @@ const EMBERS: [number, number, number, number, number][] = [
   [96, 2, 19, -15, 25],
 ];
 
-const TICKER = ['Outlaws', 'The Vance Line', 'Gamblers', 'The Bloody Raven', 'Nerve & Capital'];
+const TICKER = [
+  'Outlaws',
+  'The Vance Line',
+  'Gamblers',
+  'The Bloody Raven',
+  'Slinger Coin',
+  'The Bleeding Banks Territories',
+];
 
 export function LandingScreen() {
   const router = useRouter();
@@ -108,7 +115,7 @@ export function LandingScreen() {
 
       <main className={styles.main}>
         <section className={styles.copy} aria-labelledby="landing-title">
-          <p className={styles.eyebrow}>A frontier of nerve and capital</p>
+          <p className={styles.eyebrow}>The Bleeding Banks Territories</p>
           <h1 id="landing-title" className={styles.title}>
             <span className={styles.titleLine} style={{ '--i': 0 } as React.CSSProperties}>
               Draw your
@@ -124,8 +131,9 @@ export function LandingScreen() {
             </span>
           </h1>
           <p className={styles.lede}>
-            Step off the Vance Line into a territory run by outlaws, auditors and high-stakes gamblers. Swear allegiance,
-            take up a name, and walk into the Bloody Raven.
+            Step off the Vance Line into The Bleeding Banks Territories. Outlaws, auditors and high-stakes gamblers run
+            this frontier, and Slinger Coin still moves in the backrooms of the Bloody Raven. Swear allegiance, take up a
+            name, and walk in.
           </p>
 
           <div className={styles.actions}>

@@ -79,7 +79,7 @@ export function FactionScreen() {
           description={
             sworn
               ? `You rode in with ${sworn.name}. Allegiance is sworn for life, so it can no longer be changed.`
-              : 'Three powers hold the territory. Your allegiance colours every table you sit at, and it is sworn for life.'
+              : 'Three powers hold The Bleeding Banks Territories. Your allegiance colours every table you sit at, and it is sworn for life.'
           }
         />
 
@@ -88,7 +88,7 @@ export function FactionScreen() {
         ) : !factions ? (
           <StatePanel tone="loading" title="Unrolling the faction charter…" />
         ) : factions.length === 0 ? (
-          <StatePanel title="No factions are open yet" message="Check back once the territory opens its doors." />
+          <StatePanel title="No factions are open yet" message="Check back once The Bleeding Banks Territories opens its doors." />
         ) : (
           <fieldset className={styles.grid}>
             <legend className="visually-hidden">Factions</legend>

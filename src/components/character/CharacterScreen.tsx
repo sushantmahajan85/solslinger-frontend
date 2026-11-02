@@ -85,7 +85,7 @@ export function CharacterScreen() {
             id="character-title"
             eyebrow={`${faction.name} · ${faction.metaphor}`}
             title="Claim your identity"
-            description="Study the roster. Open a dossier, learn the legend, and choose the name you will carry into the Bloody Raven."
+            description="Study the roster. Open a dossier, learn the legend, and choose the name you will carry into the Bloody Raven — where Slinger Coin still settles in the backrooms."
           />
 
           {loadError ? (

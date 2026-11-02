@@ -151,7 +151,7 @@ export function OnboardingScreen() {
           Next stop: Solslinger
         </h1>
         <p className={styles.lede}>
-          The rails end where the legends begin. Steady your nerve, the territory is already watching.
+          The rails end where the legends begin. Steady your nerve — The Bleeding Banks Territories is already watching.
         </p>
       </section>
 

@@ -38,7 +38,7 @@ export function WalletDialog({
       onClose={onClose}
       eyebrow="Wallet"
       title="Choose your wallet"
-      description="Your wallet is your passport on the frontier. Signing in only asks for a message signature — no transaction, no fees."
+      description="Your wallet is your passport in The Bleeding Banks Territories. Signing in only asks for a message signature — no transaction, no fees."
     >
       {available.length ? (
         <ul className={styles.walletList}>

@@ -157,7 +157,9 @@ export function LobbyScreen() {
 
       <div className={styles.footerBar}>
         <MusicToggle status={music.status} onToggle={() => void music.toggle()} />
-        <p className={styles.hint}>Welcome in, {firstName}. Choose a lit station to explore.</p>
+        <p className={styles.hint}>
+          Welcome in, {firstName}. Choose a lit station — the backrooms still take Slinger Coin.
+        </p>
       </div>
     </div>
   );

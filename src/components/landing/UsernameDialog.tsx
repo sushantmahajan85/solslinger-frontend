@@ -112,7 +112,7 @@ export function UsernameDialog({
       onClose={onCancel}
       eyebrow="Your name"
       title="What do they call you?"
-      description="Pick a unique, lowercase username for the frontier. Other riders will see it. Next, your wallet will ask you to sign."
+      description="Pick a unique, lowercase username for The Bleeding Banks Territories. Other riders will see it. Next, your wallet will ask you to sign."
       size="sm"
     >
       <UsernameForm onSubmit={onSubmit} onCancel={onCancel} />
